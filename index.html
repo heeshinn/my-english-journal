@@ -33,6 +33,7 @@ body {
   color: var(--ink);
   min-height: 100vh;
   overflow-x: hidden;
+  padding-bottom: 64px;
 }
 
 /* ── NAV ── */
@@ -863,6 +864,301 @@ nav {
 .cal-day-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
 .cal-day-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
+/* ── BOTTOM TAB BAR ── */
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--ink);
+  display: flex;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 0 8px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.35);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: color .15s;
+}
+.tab-btn span { font-size: 10px; font-weight: 500; }
+.tab-btn.active { color: #7EC87F; }
+.tab-btn:hover { color: rgba(255,255,255,.7); }
+
+/* ── LEARN SCREEN ── */
+#learnScreen { padding-bottom: 100px; }
+.learn-body { padding: 20px 16px 0; max-width: 680px; margin: 0 auto; }
+
+.learn-mode-cards { display: flex; flex-direction: column; gap: 12px; }
+.learn-mode-card {
+  background: var(--paper);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 18px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+.learn-mode-card:hover { border-color: var(--accent); background: var(--accent-light); }
+.learn-mode-icon { font-size: 28px; margin-bottom: 4px; }
+.learn-mode-title { font-size: 16px; font-weight: 600; color: var(--ink); }
+.learn-mode-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.learn-mode-arrow {
+  position: absolute; right: 18px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px; color: var(--border);
+}
+
+.learn-panel {
+  display: none;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.learn-panel.show { display: block; }
+.learn-panel-header {
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.learn-back-btn {
+  background: none; border: none;
+  font-size: 13px; color: var(--muted);
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  padding: 0;
+}
+.learn-back-btn:hover { color: var(--ink); }
+.learn-panel-body { padding: 20px 16px; }
+
+/* Upload */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--rs);
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 16px;
+}
+.upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+.upload-zone.has-file { border-color: var(--accent); background: var(--accent-light); border-style: solid; }
+.upload-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--muted); }
+.upload-info { font-size: 13px; color: var(--accent); margin-bottom: 14px; min-height: 18px; font-weight: 500; }
+.upload-field { margin-bottom: 14px; }
+
+/* Chat */
+.chat-messages {
+  height: 380px;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--cream);
+}
+.chat-bubble { display: flex; max-width: 85%; }
+.chat-bubble.ai { align-self: flex-start; }
+.chat-bubble.user { align-self: flex-end; flex-direction: row-reverse; }
+.chat-text {
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.chat-bubble.ai .chat-text {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  color: var(--ink);
+}
+.chat-bubble.user .chat-text {
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.chat-correction {
+  font-size: 12px;
+  background: #FFF8E1;
+  border: 1px solid #FFE082;
+  border-radius: var(--rs);
+  padding: 8px 12px;
+  margin-top: 6px;
+  color: #5D4037;
+  line-height: 1.6;
+  max-width: 85%;
+  align-self: flex-start;
+}
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  align-items: flex-end;
+  background: var(--paper);
+}
+.chat-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--rs);
+  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  background: var(--cream);
+  resize: none;
+  max-height: 100px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+.chat-input:focus { outline: none; border-color: var(--accent); }
+.chat-send-btn {
+  width: 40px; height: 40px;
+  background: var(--accent);
+  border: none; border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: white; flex-shrink: 0;
+}
+.chat-send-btn:hover { background: #1E3F2A; }
+.chat-save-btn {
+  margin-left: auto;
+  padding: 5px 12px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  white-space: nowrap;
+}
+
+/* ── CHARACTER SCREEN ── */
+#characterScreen { padding-bottom: 100px; }
+.char-hero {
+  background: var(--ink);
+  padding: 20px 20px 18px;
+}
+.char-hero h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  color: var(--paper);
+  margin-bottom: 4px;
+}
+.char-hero p { font-size: 13px; color: rgba(255,255,255,.4); }
+.char-body {
+  padding: 20px 16px 0;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.char-section {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 16px 18px;
+  margin-bottom: 12px;
+}
+.char-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.char-field { margin-bottom: 14px; }
+.char-field:last-child { margin-bottom: 0; }
+.char-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 7px;
+}
+.char-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--rs);
+  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+.char-input:focus { outline: none; border-color: var(--accent); }
+.char-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.char-chip {
+  padding: 9px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--rs);
+  background: var(--cream);
+  font-size: 13px;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  color: var(--ink);
+  transition: all .12s;
+  text-align: center;
+  line-height: 1.4;
+}
+.char-chip small { font-size: 10px; color: var(--muted); display: block; }
+.char-chip .chip-icon { font-size: 14px; }
+.char-chip:hover { border-color: var(--accent); background: var(--accent-light); }
+.char-chip.selected { border-color: var(--accent); background: var(--accent); color: white; }
+.char-chip.selected small { color: rgba(255,255,255,.7); }
+.char-preview {
+  background: var(--cream);
+  border-radius: var(--rs);
+  padding: 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  min-height: 60px;
+  border-left: 3px solid var(--accent);
+}
+.char-save-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--rs);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  margin-bottom: 10px;
+}
+.char-save-btn:hover { background: #1E3F2A; }
+.char-saved-msg {
+  text-align: center;
+  font-size: 13px;
+  color: var(--accent);
+  min-height: 20px;
+}
+
 /* ── LOADING overlay ── */
 #loadingOverlay {
   display: none;
@@ -893,6 +1189,22 @@ nav {
   <div class="nav-logo"><span>●</span></div>
   <button class="nav-key-btn" id="keyBtn" onclick="openKeyModal()">API Key</button>
 </nav>
+
+<!-- Bottom Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-home" onclick="switchTab('home')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>홈</span>
+  </button>
+  <button class="tab-btn" id="tab-learn" onclick="switchTab('learn')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>학습</span>
+  </button>
+  <button class="tab-btn" id="tab-character" onclick="switchTab('character')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>내 설정</span>
+  </button>
+</div>
 
 <!-- API Modal -->
 <div class="modal-bg" id="keyModal">
@@ -1093,6 +1405,186 @@ nav {
   <button class="phrases-quiz-btn" onclick="startQuizFromPhrases()">이 표현으로 퀴즈 시작 →</button>
 </div>
 
+<!-- ══ LEARN ══ -->
+<div class="screen" id="learnScreen">
+  <div class="char-hero">
+    <h3>학습하기</h3>
+    <p>공부 방식을 선택해요</p>
+  </div>
+
+  <div class="learn-body">
+
+    <!-- 방식 선택 카드 -->
+    <div class="learn-mode-cards">
+      <div class="learn-mode-card" onclick="showLearnMode('upload')">
+        <div class="learn-mode-icon">📁</div>
+        <div class="learn-mode-title">내 회화수업 업로드</div>
+        <div class="learn-mode-desc">튜터와의 수업 녹취 파일(txt)을 올리면<br>표현을 자동으로 추출해드려요</div>
+        <div class="learn-mode-arrow">→</div>
+      </div>
+      <div class="learn-mode-card" onclick="showLearnMode('chat')">
+        <div class="learn-mode-icon">🤖</div>
+        <div class="learn-mode-title">AI 튜터와 대화하기</div>
+        <div class="learn-mode-desc">Claude와 영어로 자유롭게 대화하고<br>대화 내용을 복습 리스트에 저장해요</div>
+        <div class="learn-mode-arrow">→</div>
+      </div>
+    </div>
+
+    <!-- 업로드 패널 -->
+    <div class="learn-panel" id="uploadPanel">
+      <div class="learn-panel-header">
+        <button class="learn-back-btn" onclick="hideLearnMode()">← 뒤로</button>
+        <span>회화수업 업로드</span>
+      </div>
+      <div class="learn-panel-body">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">txt 파일을 탭해서 선택</div>
+          <div class="upload-sub">수업 녹취 텍스트 파일 (.txt)</div>
+          <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFileUpload(this)"/>
+        </div>
+        <div class="upload-info" id="uploadInfo"></div>
+
+        <div class="upload-field">
+          <label class="char-label">수업 날짜</label>
+          <input class="char-input" type="date" id="uploadDate"/>
+        </div>
+        <div class="upload-field">
+          <label class="char-label">주요 주제</label>
+          <div class="char-chips-row" style="margin-top:4px;">
+            <button class="char-chip" data-group="uptopic" data-val="여행" onclick="selectChip(this)">✈️ 여행</button>
+            <button class="char-chip" data-group="uptopic" data-val="업무" onclick="selectChip(this)">💼 업무</button>
+            <button class="char-chip" data-group="uptopic" data-val="가족" onclick="selectChip(this)">🏡 가족</button>
+            <button class="char-chip" data-group="uptopic" data-val="취미" onclick="selectChip(this)">🎨 취미</button>
+            <button class="char-chip" data-group="uptopic" data-val="경제" onclick="selectChip(this)">📈 경제</button>
+            <button class="char-chip" data-group="uptopic" data-val="일상" onclick="selectChip(this)">☕️ 일상</button>
+          </div>
+        </div>
+
+        <button class="char-save-btn" id="uploadBtn" onclick="processUpload()" disabled>
+          분석 시작하기
+        </button>
+      </div>
+    </div>
+
+    <!-- AI 튜터 채팅 패널 -->
+    <div class="learn-panel" id="chatPanel">
+      <div class="learn-panel-header">
+        <button class="learn-back-btn" onclick="hideLearnMode()">← 뒤로</button>
+        <span>AI 튜터와 대화</span>
+        <button class="chat-save-btn" onclick="saveChatToReview()">복습에 저장</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble ai">
+          <div class="chat-text">Hi! I'm your English tutor. 오늘 어떤 주제로 대화할까요? 편하게 영어나 한국어로 말해도 돼요 😊</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="영어로 말해보세요..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button class="chat-send-btn" onclick="sendChat()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ CHARACTER ══ -->
+<div class="screen" id="characterScreen">
+  <div class="char-hero">
+    <h3>내 설정</h3>
+    <p>설정한 프로필이 교정·피드백에 반영돼요</p>
+  </div>
+
+  <div class="char-body">
+
+    <!-- 기본 정보 -->
+    <div class="char-section">
+      <div class="char-section-title">기본 정보</div>
+
+      <div class="char-field">
+        <label class="char-label">나이</label>
+        <input class="char-input" type="number" id="charAge" placeholder="예: 34" min="10" max="99" />
+      </div>
+
+      <div class="char-field">
+        <label class="char-label">직업</label>
+        <input class="char-input" type="text" id="charJob" placeholder="예: 건축사, 디자이너, 마케터..." />
+      </div>
+
+      <div class="char-field">
+        <label class="char-label">성별</label>
+        <div class="char-chips-row">
+          <button class="char-chip" data-group="gender" data-val="여성" onclick="selectChip(this)">여성</button>
+          <button class="char-chip" data-group="gender" data-val="남성" onclick="selectChip(this)">남성</button>
+          <button class="char-chip" data-group="gender" data-val="기타" onclick="selectChip(this)">기타</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 말투 스타일 1 — 상황별 -->
+    <div class="char-section">
+      <div class="char-section-title">말투 스타일 — 상황</div>
+      <div class="char-chips-row">
+        <button class="char-chip" data-group="style1" data-val="casual" onclick="selectChip(this)">
+          <span class="chip-icon">👋</span> Casual<br><small>일상·친구</small>
+        </button>
+        <button class="char-chip" data-group="style1" data-val="business" onclick="selectChip(this)">
+          <span class="chip-icon">💼</span> Business<br><small>직장·미팅</small>
+        </button>
+        <button class="char-chip" data-group="style1" data-val="formal" onclick="selectChip(this)">
+          <span class="chip-icon">🎩</span> Formal<br><small>공식·발표</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- 말투 스타일 2 — 톤 -->
+    <div class="char-section">
+      <div class="char-section-title">말투 스타일 — 톤</div>
+      <div class="char-chips-row">
+        <button class="char-chip" data-group="style2" data-val="friendly" onclick="selectChip(this)">
+          <span class="chip-icon">😊</span> 친근한<br><small>Friendly</small>
+        </button>
+        <button class="char-chip" data-group="style2" data-val="refined" onclick="selectChip(this)">
+          <span class="chip-icon">✨</span> 세련된<br><small>Refined</small>
+        </button>
+        <button class="char-chip" data-group="style2" data-val="neutral" onclick="selectChip(this)">
+          <span class="chip-icon">⚖️</span> 중립적<br><small>Neutral</small>
+        </button>
+        <button class="char-chip" data-group="style2" data-val="professional" onclick="selectChip(this)">
+          <span class="chip-icon">🎯</span> 전문적<br><small>Professional</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- 영어 목표 -->
+    <div class="char-section">
+      <div class="char-section-title">영어 사용 목표</div>
+      <div class="char-chips-row">
+        <button class="char-chip" data-group="goal" data-val="daily" onclick="selectChip(this)">일상 회화</button>
+        <button class="char-chip" data-group="goal" data-val="business" onclick="selectChip(this)">비즈니스</button>
+        <button class="char-chip" data-group="goal" data-val="travel" onclick="selectChip(this)">여행</button>
+        <button class="char-chip" data-group="goal" data-val="exam" onclick="selectChip(this)">시험 (OPIC 등)</button>
+      </div>
+    </div>
+
+    <!-- 프리뷰 -->
+    <div class="char-section">
+      <div class="char-section-title">현재 설정 프리뷰</div>
+      <div class="char-preview" id="charPreview">
+        설정을 입력하면 교정에 이렇게 반영돼요
+      </div>
+    </div>
+
+    <button class="char-save-btn" onclick="saveCharacter()">설정 저장하기</button>
+    <div class="char-saved-msg" id="charSavedMsg"></div>
+
+  </div>
+</div>
+
 <!-- ══ QUIZ ══ -->
 <div class="screen" id="quizScreen">
   <div class="quiz-progress-bar">
@@ -1210,7 +1702,338 @@ function showLoading(msg) {
 function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
 
 // ══════════════════════════════════
-// INIT DATA — call Claude to extract ~30 phrases
+// LEARN SCREEN
+// ══════════════════════════════════
+let uploadedText = '';
+let chatHistory = [];
+
+function showLearnMode(mode) {
+  document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'none');
+  document.getElementById('uploadPanel').classList.remove('show');
+  document.getElementById('chatPanel').classList.remove('show');
+  if (mode === 'upload') document.getElementById('uploadPanel').classList.add('show');
+  if (mode === 'chat') {
+    document.getElementById('chatPanel').classList.add('show');
+    chatHistory = [];
+    document.getElementById('chatMessages').innerHTML = `
+      <div class="chat-bubble ai">
+        <div class="chat-text">Hi! I'm your English tutor. 오늘 어떤 주제로 대화할까요? 편하게 영어나 한국어로 말해도 돼요 😊</div>
+      </div>`;
+  }
+}
+
+function hideLearnMode() {
+  document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'flex');
+  document.getElementById('uploadPanel').classList.remove('show');
+  document.getElementById('chatPanel').classList.remove('show');
+}
+
+function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedText = e.target.result;
+    const zone = document.getElementById('uploadZone');
+    zone.classList.add('has-file');
+    zone.querySelector('.upload-title').textContent = file.name;
+    zone.querySelector('.upload-sub').textContent = `${Math.round(uploadedText.length / 100) / 10}KB · 텍스트 인식 완료`;
+    document.getElementById('uploadInfo').textContent = '✓ 파일 읽기 완료! 날짜와 주제를 선택하고 분석을 시작하세요';
+    document.getElementById('uploadBtn').disabled = false;
+  };
+  reader.readAsText(file, 'UTF-8');
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('uploadDate').value = today;
+}
+
+async function processUpload() {
+  if (!uploadedText) { alert('파일을 먼저 선택해주세요'); return; }
+  if (!apiKey) { alert('API 키를 먼저 설정해주세요'); return; }
+  const dateVal = document.getElementById('uploadDate').value;
+  const topic = document.querySelector('.char-chip[data-group="uptopic"].selected')?.dataset.val || '일상';
+  if (!dateVal) { alert('날짜를 선택해주세요'); return; }
+
+  showLoading('수업 내용 분석 중... (1/2)');
+
+  const charCtx = getCharacterPrompt();
+  const makePrompt = (text, startId) => `다음 영어 수업 내용에서 복습 표현을 추출해줘.${charCtx}
+
+${text}
+
+JSON 배열만 반환:
+[{"id":"p${String(startId).padStart(3,'0')}","type":"correction","topic":"${topic}","original":null,"english":"","korean":"","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]
+type: correction/expression/vocab`;
+
+  const callApi = async (prompt) => {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 3000, messages: [{ role: 'user', content: prompt }] })
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || res.status); }
+    const data = await res.json();
+    const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    return JSON.parse(raw);
+  };
+
+  try {
+    const lines = uploadedText.split('\n');
+    const half = Math.ceil(lines.length / 2);
+    const b1 = lines.slice(0, half).join('\n');
+    const b2 = lines.slice(half).join('\n');
+
+    const p1 = await callApi(makePrompt(b1, 1));
+    showLoading('수업 내용 분석 중... (2/2)');
+    const p2 = await callApi(makePrompt(b2, p1.length + 1));
+    const phrases = [...p1, ...p2];
+
+    // Build session id from date
+    const sessId = 'sess_' + dateVal.replace(/-/g, '');
+    const displayDate = dateVal.replace(/-/g, '.');
+    const dayNames = ['일','월','화','수','목','금','토'];
+    const dayOfWeek = dayNames[new Date(dateVal).getDay()];
+
+    const session = {
+      id: sessId, date: displayDate,
+      label: displayDate.slice(5).replace('.', '월 ') + '일',
+      dayOfWeek, topics: [...new Set(phrases.map(p => p.topic))], phrases
+    };
+    const idx = db.sessions.findIndex(s => s.id === sessId);
+    if (idx >= 0) db.sessions[idx] = session;
+    else db.sessions.unshift(session);
+    saveDB();
+    hideLoading();
+
+    // Reset
+    uploadedText = '';
+    document.getElementById('uploadZone').classList.remove('has-file');
+    document.getElementById('uploadZone').querySelector('.upload-title').textContent = 'txt 파일을 탭해서 선택';
+    document.getElementById('uploadZone').querySelector('.upload-sub').textContent = '수업 녹취 텍스트 파일 (.txt)';
+    document.getElementById('uploadInfo').textContent = '';
+    document.getElementById('uploadBtn').disabled = true;
+
+    alert(`✓ ${phrases.length}개 표현 추출 완료! 홈에서 확인해보세요`);
+    switchTab('home');
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+  }
+}
+
+// ── AI CHAT ──
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || !apiKey) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  appendChatBubble('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+
+  const charCtx = character.age || character.job
+    ? `User profile: ${[character.age && character.age+'세', character.gender, character.job, character.style1, character.style2].filter(Boolean).join(', ')}.`
+    : '';
+
+  const systemPrompt = `You are a friendly English conversation tutor. ${charCtx}
+Have a natural conversation in English. When the user makes grammar or expression mistakes, gently correct them AFTER responding naturally.
+Format corrections like: 💡 Correction: "[wrong]" → "[correct]" (brief Korean explanation)
+Keep responses concise and encouraging. If the user writes in Korean, respond in both English and Korean.`;
+
+  try {
+    appendChatBubble('ai', '...');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 600,
+        system: systemPrompt,
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content.map(c => c.text || '').join('');
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    // Replace typing bubble
+    const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
+    const last = bubbles[bubbles.length - 1];
+    if (last) last.querySelector('.chat-text').textContent = reply.replace(/💡 Correction:.*$/ms, '').trim();
+
+    // Show correction separately if exists
+    const corrMatch = reply.match(/💡 Correction:([\s\S]*?)(?=\n\n|$)/);
+    if (corrMatch) {
+      const corrDiv = document.createElement('div');
+      corrDiv.className = 'chat-correction';
+      corrDiv.textContent = '💡' + corrMatch[1].trim();
+      document.getElementById('chatMessages').appendChild(corrDiv);
+    }
+    scrollChat();
+  } catch(e) {
+    const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
+    const last = bubbles[bubbles.length - 1];
+    if (last) last.querySelector('.chat-text').textContent = '오류가 발생했어요. 다시 시도해주세요.';
+  }
+}
+
+function appendChatBubble(role, text) {
+  const wrap = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-bubble ${role}`;
+  div.innerHTML = `<div class="chat-text">${text}</div>`;
+  wrap.appendChild(div);
+  scrollChat();
+}
+
+function scrollChat() {
+  const el = document.getElementById('chatMessages');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function saveChatToReview() {
+  if (!chatHistory.length || !apiKey) { alert('대화 내용이 없어요'); return; }
+  if (!apiKey) { alert('API 키를 먼저 설정해주세요'); return; }
+  showLoading('대화 내용에서 표현 추출 중...');
+
+  const convo = chatHistory.map(m => `${m.role === 'user' ? '학생' : '튜터'}: ${m.content}`).join('\n');
+  const prompt = `다음 영어 대화에서 복습할 표현을 10개 추출해줘.${getCharacterPrompt()}
+
+${convo}
+
+JSON 배열만 반환:
+[{"id":"c001","type":"correction","topic":"일상","original":null,"english":"","korean":"","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    const phrases = JSON.parse(raw);
+
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+    const sessId = 'chat_' + Date.now();
+    const dayNames = ['일','월','화','수','목','금','토'];
+
+    const session = {
+      id: sessId, date: dateStr,
+      label: 'AI 대화',
+      dayOfWeek: dayNames[today.getDay()],
+      topics: [...new Set(phrases.map(p => p.topic))],
+      phrases
+    };
+    db.sessions.unshift(session);
+    saveDB();
+    hideLoading();
+    alert(`✓ ${phrases.length}개 표현을 복습 리스트에 저장했어요!`);
+    switchTab('home');
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+  }
+}
+let character = {};
+
+function loadCharacter() {
+  const s = localStorage.getItem('ej_char');
+  if (s) {
+    character = JSON.parse(s);
+    applyCharacterUI();
+  }
+}
+
+function applyCharacterUI() {
+  if (character.age) document.getElementById('charAge').value = character.age;
+  if (character.job) document.getElementById('charJob').value = character.job;
+  ['gender','style1','style2','goal'].forEach(group => {
+    if (character[group]) {
+      document.querySelectorAll(`.char-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.toggle('selected', b.dataset.val === character[group]);
+      });
+    }
+  });
+  updateCharPreview();
+}
+
+function selectChip(btn) {
+  const group = btn.dataset.group;
+  document.querySelectorAll(`.char-chip[data-group="${group}"]`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateCharPreview();
+}
+
+function updateCharPreview() {
+  const age = document.getElementById('charAge').value;
+  const job = document.getElementById('charJob').value;
+  const gender = document.querySelector('.char-chip[data-group="gender"].selected')?.dataset.val;
+  const style1 = document.querySelector('.char-chip[data-group="style1"].selected')?.dataset.val;
+  const style2 = document.querySelector('.char-chip[data-group="style2"].selected')?.dataset.val;
+  const goal = document.querySelector('.char-chip[data-group="goal"].selected')?.dataset.val;
+
+  const styleMap = { casual:'Casual', business:'Business', formal:'Formal' };
+  const toneMap = { friendly:'친근한', refined:'세련된', neutral:'중립적', professional:'전문적' };
+  const goalMap = { daily:'일상 회화', business:'비즈니스', travel:'여행', exam:'시험(OPIC)' };
+
+  const parts = [];
+  if (age) parts.push(`${age}세`);
+  if (gender) parts.push(gender);
+  if (job) parts.push(job);
+  if (style1) parts.push(styleMap[style1]);
+  if (style2) parts.push(toneMap[style2]);
+  if (goal) parts.push(`목표: ${goalMap[goal]}`);
+
+  const el = document.getElementById('charPreview');
+  if (!parts.length) {
+    el.textContent = '설정을 입력하면 교정에 이렇게 반영돼요';
+    return;
+  }
+  el.textContent = `${parts.join(' · ')} 기준으로 가장 자연스러운 표현을 추천해드려요.`;
+}
+
+function saveCharacter() {
+  character = {
+    age: document.getElementById('charAge').value,
+    job: document.getElementById('charJob').value,
+    gender: document.querySelector('.char-chip[data-group="gender"].selected')?.dataset.val || '',
+    style1: document.querySelector('.char-chip[data-group="style1"].selected')?.dataset.val || '',
+    style2: document.querySelector('.char-chip[data-group="style2"].selected')?.dataset.val || '',
+    goal: document.querySelector('.char-chip[data-group="goal"].selected')?.dataset.val || '',
+  };
+  localStorage.setItem('ej_char', JSON.stringify(character));
+  const msg = document.getElementById('charSavedMsg');
+  msg.textContent = '✓ 저장됐어요! 이제부터 교정에 반영돼요';
+  setTimeout(() => msg.textContent = '', 2500);
+}
+
+function getCharacterPrompt() {
+  if (!character.age && !character.job && !character.style1) return '';
+  const styleMap = { casual:'일상 대화체(Casual)', business:'비즈니스 영어(Business)', formal:'격식체(Formal)' };
+  const toneMap = { friendly:'친근하고 따뜻한', refined:'세련되고 품격 있는', neutral:'중립적인', professional:'전문적이고 명확한' };
+  const parts = [];
+  if (character.age) parts.push(`${character.age}세`);
+  if (character.gender) parts.push(character.gender);
+  if (character.job) parts.push(character.job);
+  if (character.style1) parts.push(styleMap[character.style1]);
+  if (character.style2) parts.push(toneMap[character.style2]);
+  return parts.length ? `\n\n사용자 프로필: ${parts.join(', ')}. 이에 맞는 가장 자연스러운 표현을 우선 추천해줘.` : '';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'home') { showScreen('homeScreen'); renderHome(); }
+  else if (tab === 'learn') {
+    showScreen('learnScreen');
+    document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'flex');
+    document.getElementById('uploadPanel').classList.remove('show');
+    document.getElementById('chatPanel').classList.remove('show');
+  }
+  else if (tab === 'character') { showScreen('characterScreen'); applyCharacterUI(); }
+}
 // ══════════════════════════════════
 const LESSON_RAW = `2026.04.13 영어 수업 (학생=참석자1, 튜터=참석자2) — 주제: 여행, 음악/아티스트 활동, 일상
 
@@ -1249,7 +2072,8 @@ const LESSON_RAW = `2026.04.13 영어 수업 (학생=참석자1, 튜터=참석�
 async function initData() {
   if (!apiKey) { openKeyModal(); return; }
 
-  const makePrompt = (items, startId) => `다음 영어 수업 내용에서 복습 표현을 추출해줘.
+  const charCtx = getCharacterPrompt();
+  const makePrompt = (items, startId) => `다음 영어 수업 내용에서 복습 표현을 추출해줘.${charCtx}
 
 ${items}
 
@@ -1884,6 +2708,7 @@ function shuffleArr(arr) {
 // ══════════════════════════════════
 loadKey();
 loadDB();
+loadCharacter();
 renderHome();
 </script>
 </body>
