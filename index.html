@@ -864,6 +864,49 @@ nav {
 .cal-day-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
 .cal-day-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
+/* Typing quiz */
+.typing-wrap { display: flex; flex-direction: column; gap: 10px; }
+.typing-input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--rs);
+  font-size: 16px;
+  font-family: 'Outfit', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+}
+.typing-input:focus { outline: none; border-color: var(--accent); }
+.typing-input.correct { border-color: var(--accent); background: var(--accent-light); }
+.typing-input.wrong { border-color: var(--red); background: var(--red-light); }
+.quiz-action-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-hint {
+  flex: 1;
+  padding: 12px;
+  background: var(--gold-light);
+  color: var(--gold);
+  border: 1.5px solid #EDD28A;
+  border-radius: var(--rs);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: all .12s;
+}
+.btn-hint:hover { background: #F5E6B0; }
+.blank-slots {
+  display: inline-block;
+  letter-spacing: 3px;
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent);
+  min-width: 40px;
+  text-align: center;
+}
+
 /* ── BOTTOM TAB BAR ── */
 .tab-bar {
   position: fixed;
@@ -1765,13 +1808,33 @@ async function processUpload() {
   showLoading('수업 내용 분석 중... (1/2)');
 
   const charCtx = getCharacterPrompt();
-  const makePrompt = (text, startId) => `다음 영어 수업 내용에서 복습 표현을 추출해줘.${charCtx}
+  const makePrompt = (text, startId) => `다음 영어 수업 녹취에서 복습할 표현을 추출해줘.${charCtx}
+
+아래 우선순위와 기준을 엄격하게 따라줘:
+
+【추출 우선순위】
+1순위: 튜터(참석자2)가 직접 교정해준 학생 문장 — 반드시 포함
+2순위: 튜터가 새로 소개한 관용구/숙어/표현
+3순위: 학생이 수업 중 반복해서 틀린 패턴
+
+【제외 기준 — 절대 포함하지 말 것】
+- 중학교 수준 기본 단어/문장 (go, have, like, want 등 단순 동사)
+- "I went to the store" 수준의 쉬운 문장
+- 난이도 easy 항목
+- 단순 명사/어휘 나열 (scenic, vibrant 같은 단어 단독)
+
+【난이도 기준】
+- medium: 문법 오류 교정, 자연스러운 표현으로 대체
+- hard: 관용구, 숙어, 원어민만 아는 표현
+
+medium 이상만 추출할 것.
 
 ${text}
 
 JSON 배열만 반환:
-[{"id":"p${String(startId).padStart(3,'0')}","type":"correction","topic":"${topic}","original":null,"english":"","korean":"","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]
-type: correction/expression/vocab`;
+[{"id":"p${String(startId).padStart(3,'0')}","type":"correction","topic":"${topic}","original":null,"english":"","korean":"","difficulty":"medium","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]
+type: correction(튜터 교정) / expression(관용구·숙어) / vocab(중급 이상 어휘만)
+difficulty: medium / hard 만 사용`;
 
   const callApi = async (prompt) => {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2081,7 +2144,26 @@ async function initData() {
   if (!apiKey) { openKeyModal(); return; }
 
   const charCtx = getCharacterPrompt();
-  const makePrompt = (items, startId) => `다음 영어 수업 내용에서 복습 표현을 추출해줘.${charCtx}
+  const makePrompt = (items, startId) => `다음 영어 수업 내용에서 복습할 표현을 추출해줘.${charCtx}
+
+아래 우선순위와 기준을 엄격하게 따라줘:
+
+【추출 우선순위】
+1순위: 튜터(참석자2)가 직접 교정해준 학생 문장 — 반드시 포함
+2순위: 튜터가 새로 소개한 관용구/숙어/표현
+3순위: 학생이 수업 중 반복해서 틀린 패턴
+
+【제외 기준 — 절대 포함하지 말 것】
+- 중학교 수준 기본 단어/문장 (go, have, like, want 등 단순 동사)
+- "I went to the store" 수준의 쉬운 문장
+- 난이도 easy 항목
+- 단순 명사/어휘 나열
+
+【난이도 기준】
+- medium: 문법 오류 교정, 자연스러운 표현으로 대체
+- hard: 관용구, 숙어, 원어민만 아는 표현
+
+medium 이상만 추출할 것. 기준 미달이면 30개 채우지 말고 질 높은 것만 추출해줘.
 
 ${items}
 
@@ -2094,6 +2176,7 @@ JSON 배열만 반환 (다른 텍스트 없이). id는 p${String(startId).padSta
     "original": "학생이 틀리게 말한 원문 (없으면 null)",
     "english": "올바르거나 자연스러운 영어 표현/문장",
     "korean": "한국어 뜻 또는 설명 (간결하게)",
+    "difficulty": "medium",
     "quiz": {
       "fill_sentence": "빈칸 문장 ___ 포함 (핵심 1~2단어를 빈칸으로, 없으면 null)",
       "fill_answer": "빈칸 정답",
@@ -2102,7 +2185,8 @@ JSON 배열만 반환 (다른 텍스트 없이). id는 p${String(startId).padSta
     }
   }
 ]
-type: correction / expression / vocab
+type: correction(튜터 교정) / expression(관용구·숙어) / vocab(중급 이상 어휘만)
+difficulty: medium / hard 만 사용
 topic: 여행 / 음악 / 일상 중 하나`;
 
   const lines = LESSON_RAW.split('\n').filter(l => l.trim());
@@ -2506,16 +2590,43 @@ function startQuizWith(phrases) {
 }
 
 function buildQuizItem(p) {
-  const hasChoices = p.quiz?.fill_sentence && p.quiz?.fill_choices?.length === 4;
   const hasFill = p.quiz?.fill_sentence && p.quiz?.fill_answer;
+  const hasChoices = p.quiz?.fill_choices?.length >= 4;
   const hasFull = p.quiz?.ko_sentence;
 
-  // prefer choices > fill > full writing
-  if (hasChoices) return { type: 'choice', phraseId: p.id, q: p.quiz.fill_sentence, sub: p.korean, answer: p.quiz.fill_answer, choices: p.quiz.fill_choices, explain: p.english };
-  if (hasFill) return { type: 'fill', phraseId: p.id, q: p.quiz.fill_sentence, sub: p.korean, answer: p.quiz.fill_answer, explain: p.english };
-  if (hasFull) return { type: 'full', phraseId: p.id, q: p.quiz.ko_sentence, sub: '영어로 써보세요', answer: p.english, explain: null };
-  // fallback
-  return { type: 'full', phraseId: p.id, q: p.korean, sub: '영어로 써보세요', answer: p.english, explain: null };
+  // 모든 문제를 우선 타이핑으로 시작, 힌트 시 4지선다 전환
+  if (hasFill) return {
+    type: 'typing', phraseId: p.id,
+    q: p.quiz.fill_sentence,
+    sub: p.korean,
+    answer: p.quiz.fill_answer,
+    choices: hasChoices ? p.quiz.fill_choices : generateChoices(p.quiz.fill_answer),
+    explain: p.english
+  };
+  return {
+    type: 'typing_full', phraseId: p.id,
+    q: p.quiz?.ko_sentence || p.korean,
+    sub: '영어로 써보세요',
+    answer: p.english,
+    choices: null,
+    explain: null
+  };
+}
+
+function generateChoices(answer) {
+  // 정답 포함 더미 보기 생성
+  const dummies = ['switch it up', 'get along with', 'rose-tinted glasses', 'keep up momentum',
+    'broaden your horizons', 'the daily grind', 'past its prime', 'tailor the experience',
+    'constrained', 'restrained', 'capture attention', 'disconnect from work'];
+  const filtered = dummies.filter(d => normalizeAns(d) !== normalizeAns(answer));
+  const picked = shuffleArr(filtered).slice(0, 3);
+  return shuffleArr([answer, ...picked]);
+}
+
+function makeBlankDisplay(sentence, answer) {
+  // 답 부분을 알파벳 수만큼 _ 로 표시
+  const blanks = '_'.repeat(answer.length);
+  return sentence.replace('___', `<span class="blank-slots">${blanks}</span>`);
 }
 
 // ══════════════════════════════════
@@ -2527,36 +2638,93 @@ function renderQ() {
   document.getElementById('qProgressFill').style.width = (currentQ / total * 100) + '%';
   document.getElementById('qCounter').textContent = `${currentQ + 1} / ${total}`;
   document.getElementById('qScoreLive').textContent = `${quizScore}점`;
-
-  const typeLabel = { choice: '4지선다', fill: '빈칸 채우기', full: '한→영 작문' };
-  document.getElementById('qTypeLabel').textContent = typeLabel[q.type];
-  document.getElementById('qQuestion').textContent = q.q;
+  document.getElementById('qTypeLabel').textContent = '빈칸 채우기';
   document.getElementById('qSub').textContent = q.sub || '';
-
   document.getElementById('feedbackPanel').className = 'feedback-panel';
   document.getElementById('nextQBtn').className = 'btn-next-q';
 
   const area = document.getElementById('qInputArea');
 
-  if (q.type === 'choice') {
-    const shuffled = shuffleArr([...q.choices]);
-    area.innerHTML = `<div class="choices-wrap">${shuffled.map(c =>
-      `<button class="choice" onclick="checkChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`
-    ).join('')}</div>`;
-  } else if (q.type === 'fill') {
-    area.innerHTML = `<div class="fill-wrap">
-      <input id="fillIn" placeholder="빈칸에 들어갈 표현을 쓰세요" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <button class="btn-check-q" onclick="checkFill()">확인</button>
-    </div>`;
-    document.getElementById('fillIn').addEventListener('keydown', e => { if (e.key === 'Enter') checkFill(); });
-    setTimeout(() => document.getElementById('fillIn')?.focus(), 50);
+  if (q.type === 'typing') {
+    const blankHtml = makeBlankDisplay(q.q, q.answer);
+    document.getElementById('qQuestion').innerHTML = blankHtml;
+    area.innerHTML = `
+      <div class="typing-wrap">
+        <input id="typingIn" class="typing-input"
+          placeholder="여기에 입력하세요"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+        <div class="quiz-action-row">
+          <button class="btn-hint" onclick="showHint()">
+            💡 힌트 (4지선다)
+          </button>
+          <button class="btn-check-q" onclick="checkTyping()">확인</button>
+        </div>
+      </div>
+      <div id="choicesArea" style="display:none;">
+        <div class="choices-wrap" id="choicesList"></div>
+      </div>`;
+    document.getElementById('typingIn').addEventListener('keydown', e => {
+      if (e.key === 'Enter') checkTyping();
+    });
+    setTimeout(() => document.getElementById('typingIn')?.focus(), 50);
+
   } else {
+    // typing_full — 한→영 작문
+    document.getElementById('qQuestion').textContent = q.q;
+    document.getElementById('qTypeLabel').textContent = '한→영 작문';
     area.innerHTML = `<div class="full-wrap">
       <textarea id="fullIn" placeholder="영어로 써보세요..." autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
       <button class="btn-check-q" id="checkFullBtn" onclick="checkFull()">확인</button>
     </div>`;
     setTimeout(() => document.getElementById('fullIn')?.focus(), 50);
   }
+}
+
+function showHint() {
+  const q = quizItems[currentQ];
+  // 타이핑 입력창 숨기고 4지선다 노출
+  const typingWrap = document.querySelector('.typing-wrap');
+  if (typingWrap) typingWrap.style.display = 'none';
+  const choicesArea = document.getElementById('choicesArea');
+  choicesArea.style.display = 'block';
+  const choices = q.choices || generateChoices(q.answer);
+  const shuffled = shuffleArr([...choices]);
+  document.getElementById('choicesList').innerHTML = shuffled.map(c =>
+    `<button class="choice" onclick="checkHintChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`
+  ).join('');
+  document.getElementById('qTypeLabel').textContent = '4지선다 (힌트 사용)';
+}
+
+function checkHintChoice(btn, chosen) {
+  const q = quizItems[currentQ];
+  document.querySelectorAll('#choicesList .choice').forEach(b => b.disabled = true);
+  const correct = normalizeAns(chosen) === normalizeAns(q.answer);
+  btn.className = 'choice ' + (correct ? 'correct' : 'wrong');
+  if (!correct) {
+    document.querySelectorAll('#choicesList .choice').forEach(b => {
+      if (normalizeAns(b.textContent.trim()) === normalizeAns(q.answer)) b.className = 'choice reveal';
+    });
+  }
+  // 힌트 사용 시 정답이어도 0.5점 (오답 카운트는 안 함)
+  recordResult(q.phraseId, false, q.q); // 힌트 쓴 건 오답 처리
+  if (correct) quizScore += 0.5;
+  document.getElementById('qScoreLive').textContent = `${quizScore}점`;
+  showFeedback(correct, q.answer, q.explain);
+}
+
+function checkTyping() {
+  const q = quizItems[currentQ];
+  const inp = document.getElementById('typingIn');
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  const correct = normalizeAns(val) === normalizeAns(q.answer) ||
+    normalizeAns(q.answer).includes(normalizeAns(val)) && val.length > 2;
+  inp.className = 'typing-input ' + (correct ? 'correct' : 'wrong');
+  inp.disabled = true;
+  document.querySelector('.quiz-action-row').style.display = 'none';
+  recordResult(q.phraseId, correct, q.q);
+  showFeedback(correct, q.answer, q.explain);
 }
 
 function checkChoice(btn, chosen) {
@@ -2569,20 +2737,6 @@ function checkChoice(btn, chosen) {
       if (normalizeAns(b.textContent.trim()) === normalizeAns(q.answer)) b.className = 'choice reveal';
     });
   }
-  recordResult(q.phraseId, correct, q.q);
-  showFeedback(correct, q.answer, q.explain);
-}
-
-function checkFill() {
-  const q = quizItems[currentQ];
-  const inp = document.getElementById('fillIn');
-  const val = inp.value.trim();
-  if (!val) return;
-  const correct = normalizeAns(val) === normalizeAns(q.answer) ||
-    normalizeAns(q.answer).includes(normalizeAns(val)) && val.length > 2;
-  inp.className = correct ? 'correct' : 'wrong';
-  inp.disabled = true;
-  inp.nextElementSibling.style.display = 'none';
   recordResult(q.phraseId, correct, q.q);
   showFeedback(correct, q.answer, q.explain);
 }
