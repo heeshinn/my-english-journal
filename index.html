@@ -1187,7 +1187,11 @@ nav {
 <!-- Nav -->
 <nav>
   <div class="nav-logo"><span>●</span></div>
-  <button class="nav-key-btn" id="keyBtn" onclick="openKeyModal()">API Key</button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="loginStatus" style="font-size:11px;color:rgba(255,255,255,.4);">로그인하면 기기간 동기화 가능</span>
+    <button class="nav-key-btn" id="loginBtn" onclick="firebaseLogin()">Google 로그인</button>
+    <button class="nav-key-btn" id="keyBtn" onclick="openKeyModal()">API Key</button>
+  </div>
 </nav>
 
 <!-- Bottom Tab Bar -->
@@ -1345,6 +1349,10 @@ nav {
       <button class="random-btn" onclick="startRandom()" style="margin:16px 0 0;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
         전체 랜덤 복습
+      </button>
+      <button class="random-btn" onclick="if(window.fbLoadPhrases)window.fbLoadPhrases();else alert('잠시 후 다시 시도해주세요')" style="margin:8px 0 0;background:var(--blue);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Firebase에서 불러오기
       </button>
     </div>
 
@@ -2148,14 +2156,13 @@ topic: 여행 / 음악 / 일상 중 하나`;
     saveDB();
     hideLoading();
     renderHome();
+    syncToSheets(phrases, session.date, 'lesson');
+    if (window.fbSavePhrases) window.fbSavePhrases(phrases, session.date, 'lesson');
   } catch(e) {
     hideLoading();
     alert('오류: ' + e.message);
   }
 }
-
-// ══════════════════════════════════
-// HOME RENDER
 // ══════════════════════════════════
 const topicEmoji = { '여행': '✈️', '음악': '🎵', '일상': '☕️', '비즈니스': '💼', '문화': '🌍' };
 
@@ -2633,10 +2640,11 @@ function recordResult(phraseId, correct, qText) {
   } else {
     if (db.wrongCount[phraseId] > 0) db.wrongCount[phraseId]--;
   }
-  // track recent
   if (!db.recentReviewed) db.recentReviewed = [];
   db.recentReviewed = [phraseId, ...db.recentReviewed.filter(id => id !== phraseId)].slice(0, 20);
   saveDB();
+  syncStatsToSheets(phraseId, correct);
+  if (window.fbUpdateStats) window.fbUpdateStats(phraseId, correct);
   if (correct) quizScore++;
   quizResults.push({ q: qText, correct });
   document.getElementById('qScoreLive').textContent = `${quizScore}점`;
@@ -2693,6 +2701,81 @@ function retryQuiz() {
 }
 
 // ══════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ══════════════════════════════════
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz06wMxNsR7FK4gHoQmbxQ9N1WV9HfcQWKat_fbZoGbcQqabV5JuQxcrIjDyyXT79re/exec';
+
+async function sheetsPost(payload) {
+  const res = await fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+async function syncToSheets(phrases, date, source) {
+  try {
+    const payload = {
+      action: 'savePhrases',
+      phrases: phrases.map(p => ({ ...p, date, source: source || 'upload' }))
+    };
+    const result = await sheetsPost(payload);
+    console.log('Sheets sync:', result);
+    return result;
+  } catch(e) {
+    console.warn('Sheets sync failed:', e.message);
+  }
+}
+
+async function syncStatsToSheets(phraseId, correct) {
+  try {
+    await sheetsPost({ action: 'updateStats', phraseId, correct });
+  } catch(e) {
+    console.warn('Stats sync failed:', e.message);
+  }
+}
+
+async function loadFromSheets() {
+  try {
+    showLoading('Google Sheets에서 불러오는 중...');
+    const res = await fetch(SHEETS_URL + '?action=loadPhrases');
+    const data = await res.json();
+    if (!data.phrases || !data.phrases.length) {
+      hideLoading();
+      alert('시트에 저장된 표현이 없어요');
+      return;
+    }
+    // Group by date into sessions
+    const sessionMap = {};
+    data.phrases.forEach(p => {
+      const date = p.date || '날짜 없음';
+      if (!sessionMap[date]) sessionMap[date] = [];
+      sessionMap[date].push(p);
+    });
+    Object.entries(sessionMap).forEach(([date, phrases]) => {
+      const sessId = 'sheets_' + date.replace(/\./g, '');
+      const existing = db.sessions.findIndex(s => s.id === sessId);
+      const session = {
+        id: sessId, date,
+        label: date, dayOfWeek: '',
+        topics: [...new Set(phrases.map(p => p.topic || '일상'))],
+        phrases
+      };
+      if (existing >= 0) db.sessions[existing] = session;
+      else db.sessions.unshift(session);
+    });
+    saveDB();
+    hideLoading();
+    renderHome();
+    alert(`✓ ${data.phrases.length}개 표현을 Sheets에서 불러왔어요!`);
+  } catch(e) {
+    hideLoading();
+    alert('불러오기 실패: ' + e.message);
+  }
+}
+
+// ══════════════════════════════════
 // UTILS
 // ══════════════════════════════════
 function shuffleArr(arr) {
@@ -2710,6 +2793,124 @@ loadKey();
 loadDB();
 loadCharacter();
 renderHome();
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, query, where }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCMTG6lr-YOOJC9SRwZ4NAOt0ncyOwb71U",
+  authDomain: "my-english-journal-98284.firebaseapp.com",
+  projectId: "my-english-journal-98284",
+  storageBucket: "my-english-journal-98284.firebasestorage.app",
+  messagingSenderId: "796218556610",
+  appId: "1:796218556610:web:c00e75400287623f9afb5b"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db_fire = getFirestore(fbApp);
+
+// ── 로그인 상태 감지 ──
+onAuthStateChanged(auth, user => {
+  const loginBtn = document.getElementById('loginBtn');
+  const loginStatus = document.getElementById('loginStatus');
+  if (user) {
+    loginBtn.textContent = '로그아웃';
+    loginBtn.onclick = () => signOut(auth);
+    loginStatus.textContent = `✓ ${user.email}`;
+    loginStatus.style.color = '#7EC87F';
+    window._firebaseUser = user;
+  } else {
+    loginBtn.textContent = 'Google 로그인';
+    loginBtn.onclick = firebaseLogin;
+    loginStatus.textContent = '로그인하면 기기간 동기화 가능';
+    loginStatus.style.color = 'rgba(255,255,255,.4)';
+    window._firebaseUser = null;
+  }
+});
+
+async function firebaseLogin() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    alert('로그인 실패: ' + e.message);
+  }
+}
+window.firebaseLogin = firebaseLogin;
+
+// ── Firestore 저장 ──
+window.fbSavePhrases = async function(phrases, date, source) {
+  const user = window._firebaseUser;
+  if (!user) return;
+  try {
+    const col = collection(db_fire, 'users', user.uid, 'phrases');
+    for (const p of phrases) {
+      await setDoc(doc(col, p.id), { ...p, date, source: source || 'upload', uid: user.uid });
+    }
+    console.log(`✓ ${phrases.length}개 Firebase 저장`);
+  } catch(e) { console.warn('Firebase 저장 실패:', e.message); }
+};
+
+// ── Firestore 불러오기 ──
+window.fbLoadPhrases = async function() {
+  const user = window._firebaseUser;
+  if (!user) { alert('먼저 Google 로그인을 해주세요'); return; }
+  try {
+    showLoading('Firebase에서 불러오는 중...');
+    const col = collection(db_fire, 'users', user.uid, 'phrases');
+    const snap = await getDocs(col);
+    const phrases = snap.docs.map(d => d.data());
+    if (!phrases.length) { hideLoading(); alert('저장된 표현이 없어요'); return; }
+
+    // 날짜별 세션으로 그룹핑
+    const sessionMap = {};
+    phrases.forEach(p => {
+      const date = p.date || '날짜 없음';
+      if (!sessionMap[date]) sessionMap[date] = [];
+      sessionMap[date].push(p);
+    });
+    Object.entries(sessionMap).forEach(([date, ps]) => {
+      const sessId = 'fb_' + date.replace(/\./g, '');
+      const idx = db.sessions.findIndex(s => s.id === sessId);
+      const session = {
+        id: sessId, date,
+        label: date, dayOfWeek: '',
+        topics: [...new Set(ps.map(p => p.topic || '일상'))],
+        phrases: ps
+      };
+      if (idx >= 0) db.sessions[idx] = session;
+      else db.sessions.unshift(session);
+    });
+    saveDB();
+    hideLoading();
+    renderHome();
+    alert(`✓ ${phrases.length}개 표현을 불러왔어요!`);
+  } catch(e) { hideLoading(); alert('불러오기 실패: ' + e.message); }
+};
+
+// ── 퀴즈 정답/오답 업데이트 ──
+window.fbUpdateStats = async function(phraseId, correct) {
+  const user = window._firebaseUser;
+  if (!user) return;
+  try {
+    const ref = doc(db_fire, 'users', user.uid, 'phrases', phraseId);
+    const field = correct ? 'review_count' : 'wrong_count';
+    // increment 없이 간단하게
+    const snap = await getDocs(query(collection(db_fire, 'users', user.uid, 'phrases')));
+    const found = snap.docs.find(d => d.id === phraseId);
+    if (found) {
+      const cur = found.data()[field] || 0;
+      await updateDoc(ref, { [field]: cur + 1 });
+    }
+  } catch(e) { console.warn('stats 업데이트 실패:', e.message); }
+};
 </script>
 </body>
 </html>
