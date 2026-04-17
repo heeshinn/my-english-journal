@@ -1225,12 +1225,13 @@ async function processUpload() {
 
   const makePrompt = (text, startId) => `다음 영어 수업 녹취에서 복습할 항목을 추출해줘.${charCtx}
 
-【핵심 원칙 — Full Sentence 기반】
-- english: 반드시 완전한 문장 (단어/표현 단독 절대 X)
-- expression: english 문장 속 핵심 표현/숙어만 2~5단어로 따로 저장. 반드시 채울 것 (null 사용 최소화)
-  예시) english: "We tend to look back on things through rose-tinted glasses."
-        expression: "rose-tinted glasses"
-- korean: expression의 한국어 뜻 (문장 전체 번역 X, 핵심 표현 설명)
+【필드 정의 — 반드시 정확히 지켜줘】
+- english: 완전한 영어 문장. 예) "We tend to look back on things through rose-tinted glasses."
+- expression: 그 문장 속 핵심 영어 표현/숙어만 (영어로만, 2~5단어). 예) "rose-tinted glasses"
+- korean: expression의 한국어 뜻만 (영어 X). 예) "장밋빛 안경, 과거를 아름답게만 기억하는 경향"
+
+⚠️ expression 필드에 한국어 절대 넣지 말 것. expression은 항상 영어.
+⚠️ korean 필드에 영어 절대 넣지 말 것. korean은 항상 한국어.
 
 【추출 우선순위】
 1순위: 튜터가 직접 교정해준 학생 문장 (교정된 full sentence)
@@ -1248,15 +1249,15 @@ JSON 배열만 반환 (id는 ${datePrefix}_up_${String(startId).padStart(3,'0')}
   "type":"correction",
   "topic":"일상",
   "original":"학생이 틀리게 말한 원문 (없으면 null)",
-  "english":"완전한 영어 문장",
-  "expression":"핵심 표현 2~5단어",
-  "korean":"핵심 표현의 한국어 뜻",
+  "english":"We tend to look back on things through rose-tinted glasses.",
+  "expression":"rose-tinted glasses",
+  "korean":"장밋빛 안경, 과거를 아름답게만 기억하는 경향",
   "difficulty":"medium",
   "quiz":{
-    "fill_sentence":"english 문장에서 expression 부분을 ___ 로 대체",
-    "fill_answer":"expression 값과 동일",
-    "fill_choices":["expression 포함 4지선다"],
-    "ko_sentence":"한→영 퀴즈용 한국어 문장"
+    "fill_sentence":"We tend to look back on things through ___.",
+    "fill_answer":"rose-tinted glasses",
+    "fill_choices":["rose-tinted glasses","dark-tinted glasses","clear glasses","broken glasses"],
+    "ko_sentence":"우리는 과거를 장밋빛 안경을 통해 돌아보는 경향이 있다"
   }
 }]
 topic: 일상/육아/업무/예술/디자인·기획/웰니스 중 하나만.
@@ -1449,9 +1450,13 @@ async function saveChatToReview() {
   const prompt = `다음 영어 대화에서 복습할 항목을 10개 추출해줘.${getCharacterPrompt()}
 ${convo}
 
-【핵심 원칙 — Full Sentence 기반】
-- english 필드에는 반드시 완전한 문장으로 저장 (단어/표현 단독 X)
-- expression 필드에 핵심 표현/숙어만 따로 저장
+【필드 정의 — 반드시 정확히 지켜줘】
+- english: 완전한 영어 문장. 예) "I need some time to myself to recharge."
+- expression: 그 문장 속 핵심 영어 표현/숙어만 (영어로만, 2~5단어). 예) "time to myself"
+- korean: expression의 한국어 뜻만 (영어 X). 예) "나만의 시간, 혼자만의 시간"
+
+⚠️ expression 필드에 한국어 절대 넣지 말 것. expression은 항상 영어.
+⚠️ korean 필드에 영어 절대 넣지 말 것. korean은 항상 한국어.
 
 【주제 분류 — 반드시 아래 6개 중 하나만 사용】
 일상(루틴·생활·잡담·여행·인관관계) / 육아(아이·교육·가정) / 업무(미팅·커리어·비즈니스) / 예술(음악·미술·공연·문화) / 디자인·기획(건축·공간·프로젝트) / 웰니스(건강·운동·멘탈)
@@ -1523,10 +1528,13 @@ URL: ${url}
 주제 힌트: ${topicHint}
 ${getCharacterPrompt()}
 
-【핵심 원칙 — Full Sentence 아카이빙】
-- english 필드: 해당 표현이 실제로 쓰인 완전한 문장 (컨텐츠에서 그대로 또는 재구성)
-- expression 필드: 그 문장 속 핵심 표현/숙어만 따로
-- 표현 단독 저장 X, 반드시 문장 통째로
+【필드 정의 — 반드시 정확히 지켜줘】
+- english: 표현이 쓰인 완전한 영어 문장. 예) "The neighborhood has gone through rapid gentrification."
+- expression: 그 문장 속 핵심 영어 표현/숙어만 (영어로만, 2~5단어). 예) "gone through gentrification"
+- korean: expression의 한국어 뜻만 (영어 X). 예) "젠트리피케이션을 겪다"
+
+⚠️ expression 필드에 한국어 절대 넣지 말 것. expression은 항상 영어.
+⚠️ korean 필드에 영어 절대 넣지 말 것. korean은 항상 한국어.
 
 【추출 기준】
 - 원어민이 실제로 쓰는 자연스러운 표현 15개
