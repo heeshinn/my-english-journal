@@ -1221,13 +1221,16 @@ async function processUpload() {
 업로더가 선택한 주요 주제 힌트: ${topicHint}
 표현 내용을 보고 위 6개 중 가장 적합한 것으로 분류해줘. 새로운 주제를 만들지 말 것.`;
 
+  const datePrefix = dateVal.replace(/-/g, '').slice(2); // e.g. 260413
+
   const makePrompt = (text, startId) => `다음 영어 수업 녹취에서 복습할 항목을 추출해줘.${charCtx}
 
 【핵심 원칙 — Full Sentence 기반】
-- english 필드에는 반드시 완전한 문장으로 저장 (단어/표현 단독 X)
-- 튜터가 교정해준 경우: 교정된 완전한 문장
-- 관용구/숙어인 경우: 그 표현이 쓰인 완전한 예시 문장
-- expression 필드에 핵심 표현/숙어만 따로 저장
+- english: 반드시 완전한 문장 (단어/표현 단독 절대 X)
+- expression: english 문장 속 핵심 표현/숙어만 2~5단어로 따로 저장. 반드시 채울 것 (null 사용 최소화)
+  예시) english: "We tend to look back on things through rose-tinted glasses."
+        expression: "rose-tinted glasses"
+- korean: expression의 한국어 뜻 (문장 전체 번역 X, 핵심 표현 설명)
 
 【추출 우선순위】
 1순위: 튜터가 직접 교정해준 학생 문장 (교정된 full sentence)
@@ -1239,20 +1242,20 @@ async function processUpload() {
 ${TOPIC_GUIDE}
 ${text}
 
-JSON 배열만 반환:
+JSON 배열만 반환 (id는 ${datePrefix}_up_${String(startId).padStart(3,'0')}부터 순서대로 증가):
 [{
-  "id":"p${String(startId).padStart(3,'0')}",
+  "id":"${datePrefix}_up_${String(startId).padStart(3,'0')}",
   "type":"correction",
   "topic":"일상",
   "original":"학생이 틀리게 말한 원문 (없으면 null)",
-  "english":"교정되거나 자연스러운 완전한 영어 문장",
-  "expression":"문장 속 핵심 표현/숙어 (없으면 null)",
-  "korean":"한국어 뜻 또는 설명",
+  "english":"완전한 영어 문장",
+  "expression":"핵심 표현 2~5단어",
+  "korean":"핵심 표현의 한국어 뜻",
   "difficulty":"medium",
   "quiz":{
-    "fill_sentence":"문장에서 핵심 표현 부분을 ___ 로 대체한 빈칸 문장",
-    "fill_answer":"핵심 표현 정답",
-    "fill_choices":["정답 포함 4지선다"],
+    "fill_sentence":"english 문장에서 expression 부분을 ___ 로 대체",
+    "fill_answer":"expression 값과 동일",
+    "fill_choices":["expression 포함 4지선다"],
     "ko_sentence":"한→영 퀴즈용 한국어 문장"
   }
 }]
@@ -1272,11 +1275,16 @@ type: correction(교정)/expression(관용구·숙어)/vocab(중급어휘).`;
 
   try {
     const lines = uploadedText.split('\n');
+    const datePrefix = dateVal.replace(/-/g, '');
     const half = Math.ceil(lines.length / 2);
     const p1 = await callApi(makePrompt(lines.slice(0, half).join('\n'), 1));
     showLoading('수업 내용 분석 중... (2/2)');
     const p2 = await callApi(makePrompt(lines.slice(half).join('\n'), p1.length + 1));
-    const phrases = [...p1, ...p2];
+    // id에 날짜 prefix 붙여서 중복 방지
+    const phrases = [...p1, ...p2].map((p, i) => ({
+      ...p,
+      id: `${datePrefix}_${String(i+1).padStart(3,'0')}`
+    }));
 
     // Sheets에 저장 (단일 소스)
     showLoading('Google Sheets에 저장 중…');
@@ -1434,6 +1442,9 @@ function scrollChat() { const el = document.getElementById('chatMessages'); el.s
 async function saveChatToReview() {
   if (!chatHistory.length || !apiKey) { alert('대화 내용이 없어요'); return; }
   showLoading('대화 내용에서 표현 추출 중...');
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+  const datePrefix = dateStr.replace(/\./g,'').slice(2); // e.g. 260413
   const convo = chatHistory.map(m => `${m.role === 'user' ? '학생' : '튜터'}: ${m.content}`).join('\n');
   const prompt = `다음 영어 대화에서 복습할 항목을 10개 추출해줘.${getCharacterPrompt()}
 ${convo}
@@ -1445,9 +1456,9 @@ ${convo}
 【주제 분류 — 반드시 아래 6개 중 하나만 사용】
 일상(루틴·생활·잡담·여행·인관관계) / 육아(아이·교육·가정) / 업무(미팅·커리어·비즈니스) / 예술(음악·미술·공연·문화) / 디자인·기획(건축·공간·프로젝트) / 웰니스(건강·운동·멘탈)
 
-JSON 배열만 반환:
+JSON 배열만 반환 (id는 ${datePrefix}_ch_001부터 순서대로):
 [{
-  "id":"c001","type":"correction","topic":"일상",
+  "id":"${datePrefix}_ch_001","type":"correction","topic":"일상",
   "original":null,
   "english":"완전한 영어 문장",
   "expression":"핵심 표현/숙어 또는 null",
@@ -1462,9 +1473,10 @@ topic: 일상/육아/업무/예술/디자인·기획/웰니스 중 하나만.`;
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
-    const phrases = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim());
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+    const rawPhrases = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim());
+    // id 재정의 — 충돌 방지용 timestamp suffix
+    const ts = Date.now().toString().slice(-4);
+    const phrases = rawPhrases.map((p, i) => ({ ...p, id: `${datePrefix}_ch_${ts}_${String(i+1).padStart(3,'0')}` }));
     showLoading('Google Sheets에 저장 중…');
     await syncToSheets(phrases, dateStr, 'chat');
     db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
@@ -1502,6 +1514,9 @@ async function fetchAndExtract() {
 
   showLoading(`${typeLabel} 분석 중...`);
 
+  const today = new Date();
+  const datePrefix = `${String(today.getFullYear()).slice(2)}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+
   const prompt = `다음 URL의 영어 컨텐츠를 분석해서 학습 항목을 추출해줘.
 URL: ${url}
 컨텐츠 유형: ${typeLabel}
@@ -1520,9 +1535,9 @@ ${getCharacterPrompt()}
 【주제 분류 — 반드시 아래 6개 중 하나만】
 일상(루틴·생활·잡담·여행·인간관계) / 육아(아이·교육·가정) / 업무(미팅·커리어·비즈니스) / 예술(음악·미술·공연·문화) / 디자인·기획(건축·공간·프로젝트) / 웰니스(건강·운동·멘탈)
 
-JSON 배열만 반환:
+JSON 배열만 반환 (id는 ${datePrefix}_lk_001부터 순서대로):
 [{
-  "id":"lnk001",
+  "id":"${datePrefix}_lk_001",
   "type":"expression",
   "topic":"일상",
   "original":null,
@@ -1590,27 +1605,30 @@ async function saveLinkPhrases() {
   const domain = (() => { try { return new URL(url).hostname.replace('www.',''); } catch(e) { return 'link'; }})();
   const today = new Date();
   const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+  const ts = Date.now().toString().slice(-4);
+  const datePrefix2 = `${String(today.getFullYear()).slice(2)}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const phrases = linkExtractedPhrases.map((p, i) => ({ ...p, id: `${datePrefix2}_lk_${ts}_${String(i+1).padStart(3,'0')}` }));
   const dayNames = ['일','월','화','수','목','금','토'];
   const session = {
     id: 'link_' + Date.now(),
     date: dateStr,
     label: `🔗 ${domain}`,
     dayOfWeek: dayNames[today.getDay()],
-    topics: [...new Set(linkExtractedPhrases.map(p => p.topic))],
-    phrases: linkExtractedPhrases,
+    topics: [...new Set(phrases.map(p => p.topic))],
+    phrases,
     sourceUrl: url
   };
   db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
   saveDB();
   showLoading('Google Sheets에 저장 중…');
-  await syncToSheets(linkExtractedPhrases, dateStr, 'link');
+  await syncToSheets(phrases, dateStr, 'link');
   await loadSheetsData(true);
   hideLoading();
-  currentPhrases = linkExtractedPhrases;
-  const pool = buildWeightedPool(linkExtractedPhrases, Math.min(10, linkExtractedPhrases.length));
+  currentPhrases = phrases;
+  const pool = buildWeightedPool(phrases, Math.min(10, phrases.length));
   document.getElementById('phrasesTitle').textContent = `🔗 ${domain} 분석`;
-  document.getElementById('phrasesMeta').textContent = `표현 ${linkExtractedPhrases.length}개`;
-  if (confirm(`✓ ${linkExtractedPhrases.length}개 표현 저장 완료!\n지금 바로 퀴즈를 풀어볼까요?`)) {
+  document.getElementById('phrasesMeta').textContent = `표현 ${phrases.length}개`;
+  if (confirm(`✓ ${phrases.length}개 표현 저장 완료!\n지금 바로 퀴즈를 풀어볼까요?`)) {
     startQuizWith(pool);
   } else {
     switchTab('home');
@@ -2035,14 +2053,17 @@ function startQuizWith(phrases) {
 function buildQuizItem(p) {
   const hasFill = p.quiz?.fill_sentence && p.quiz?.fill_answer;
   const hasChoices = p.quiz?.fill_choices?.length >= 4;
-  if (hasFill) return {
-    type: 'typing', phraseId: p.id,
-    q: p.quiz.fill_sentence, sub: p.korean,
-    answer: p.quiz.fill_answer,
-    choices: hasChoices ? p.quiz.fill_choices : generateChoices(p.quiz.fill_answer),
+  const answer = p.quiz?.fill_answer || p.expression || '';
+  const sentence = p.quiz?.fill_sentence || (p.english && answer ? p.english.replace(answer, '___') : null) || p.english || '';
+  return {
+    type: 'typing',
+    phraseId: p.id,
+    q: sentence,
+    sub: p.korean || '',
+    answer: answer,
+    choices: hasChoices ? p.quiz.fill_choices : generateChoices(answer),
     explain: p.english
   };
-  return { type: 'typing_full', phraseId: p.id, q: p.quiz?.ko_sentence || p.korean, sub: '영어로 써보세요', answer: p.english, choices: null, explain: null };
 }
 
 function generateChoices(answer) {
@@ -2065,25 +2086,22 @@ function renderQ() {
   document.getElementById('qSub').textContent = q.sub || '';
   document.getElementById('feedbackPanel').className = 'feedback-panel';
   document.getElementById('nextQBtn').className = 'btn-next-q';
-  const area = document.getElementById('qInputArea');
-  if (q.type === 'typing') {
-    document.getElementById('qQuestion').innerHTML = makeBlankDisplay(q.q, q.answer);
-    area.innerHTML = `<div class="typing-wrap">
-      <input id="typingIn" class="typing-input" placeholder="여기에 입력하세요" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+
+  document.getElementById('qQuestion').innerHTML = makeBlankDisplay(q.q, q.answer);
+  document.getElementById('qInputArea').innerHTML = `
+    <div class="typing-wrap">
+      <input id="typingIn" class="typing-input" placeholder="핵심 표현을 입력하세요"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <div class="quiz-action-row">
         <button class="btn-hint" onclick="showHint()">💡 힌트 (4지선다)</button>
         <button class="btn-check-q" onclick="checkTyping()">확인</button>
       </div>
     </div>
-    <div id="choicesArea" style="display:none;"><div class="choices-wrap" id="choicesList"></div></div>`;
-    document.getElementById('typingIn').addEventListener('keydown', e => { if (e.key === 'Enter') checkTyping(); });
-    setTimeout(() => document.getElementById('typingIn')?.focus(), 50);
-  } else {
-    document.getElementById('qQuestion').textContent = q.q;
-    document.getElementById('qTypeLabel').textContent = '한→영 작문';
-    area.innerHTML = `<div class="full-wrap"><textarea id="fullIn" placeholder="영어로 써보세요..." autocorrect="off" autocapitalize="off" spellcheck="false"></textarea><button class="btn-check-q" id="checkFullBtn" onclick="checkFull()">확인</button></div>`;
-    setTimeout(() => document.getElementById('fullIn')?.focus(), 50);
-  }
+    <div id="choicesArea" style="display:none;">
+      <div class="choices-wrap" id="choicesList"></div>
+    </div>`;
+  document.getElementById('typingIn').addEventListener('keydown', e => { if (e.key === 'Enter') checkTyping(); });
+  setTimeout(() => document.getElementById('typingIn')?.focus(), 50);
 }
 
 function showHint() {
@@ -2121,32 +2139,6 @@ function checkTyping() {
   document.querySelector('.quiz-action-row').style.display = 'none';
   recordResult(q.phraseId, correct, q.q);
   showFeedback(correct, q.answer, q.explain);
-}
-
-async function checkFull() {
-  const q = quizItems[currentQ];
-  const val = document.getElementById('fullIn').value.trim();
-  if (!val) return;
-  const btn = document.getElementById('checkFullBtn');
-  btn.disabled = true; btn.textContent = 'AI 채점 중…';
-  document.getElementById('fullIn').disabled = true;
-  let correct = false, note = '';
-  const simple = normalizeAns(val);
-  const ansWords = normalizeAns(q.answer).split(' ').filter(w => w.length > 3);
-  correct = ansWords.filter(w => simple.includes(w)).length >= Math.ceil(ansWords.length * 0.55);
-  if (apiKey) {
-    try {
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 200, messages: [{ role: 'user', content: `영어 작문 채점. 한국어 질문: "${q.q}" / 학생: "${val}" / 모범: "${q.answer}"\n의미가 통하거나 문법이 맞으면 correct. JSON만:\n{"correct":true/false,"note":"틀렸을 때 한국어 짧은 피드백"}` }] })
-      });
-      if (r.ok) { const d = await r.json(); const g = JSON.parse(d.content.map(c => c.text||'').join('').replace(/```json|```/g,'').trim()); correct = g.correct; note = g.note || ''; }
-    } catch(e) {}
-  }
-  btn.style.display = 'none';
-  recordResult(q.phraseId, correct, q.q);
-  showFeedback(correct, q.answer, note || null);
 }
 
 function normalizeAns(s) { return (s || '').toLowerCase().replace(/[^a-z0-9\s']/g,'').trim(); }
