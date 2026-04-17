@@ -675,15 +675,15 @@ nav {
         </div>
       </div>
 
-      <!-- [FIX 3] 하단 버튼들 — 통일 여백 -->
+      <!-- 하단 버튼들 -->
       <div class="home-action-btns">
         <button class="random-btn" onclick="startRandom()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
           전체 랜덤 복습
         </button>
-        <button class="random-btn blue-btn" onclick="loadFromSheets()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Sheets에서 불러오기
+        <button class="random-btn blue-btn" onclick="refreshFromSheets()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          데이터 새로고침
         </button>
       </div>
     </div>
@@ -1179,6 +1179,11 @@ JSON 배열만 반환:
     const idx = db.sessions.findIndex(s => s.id === sessId);
     if (idx >= 0) db.sessions[idx] = session; else db.sessions.unshift(session);
     saveDB();
+
+    // Sheets에 저장 (단일 소스)
+    showLoading('Google Sheets에 저장 중…');
+    await syncToSheets(phrases, session.date, 'upload');
+
     hideLoading();
     uploadedText = '';
     document.getElementById('uploadZone').classList.remove('has-file');
@@ -1186,7 +1191,7 @@ JSON 배열만 반환:
     document.getElementById('uploadZone').querySelector('.upload-sub').textContent = '수업 녹취 텍스트 파일 (.txt)';
     document.getElementById('uploadInfo').textContent = '';
     document.getElementById('uploadBtn').disabled = true;
-    alert(`✓ ${phrases.length}개 표현 추출 완료!`);
+    alert(`✓ ${phrases.length}개 표현이 저장됐어요!`);
     switchTab('home');
   } catch(e) { hideLoading(); alert('오류: ' + e.message); }
 }
@@ -1344,6 +1349,8 @@ JSON 배열만 반환:
     const session = { id: 'chat_' + Date.now(), date: dateStr, label: 'AI 대화', dayOfWeek: dayNames[today.getDay()], topics: [...new Set(phrases.map(p => p.topic))], phrases };
     db.sessions.unshift(session);
     saveDB();
+    showLoading('Google Sheets에 저장 중…');
+    await syncToSheets(phrases, dateStr, 'chat');
     hideLoading();
     alert(`✓ ${phrases.length}개 표현을 저장했어요!`);
     switchTab('home');
@@ -1471,14 +1478,14 @@ async function saveLinkPhrases() {
   };
   db.sessions.unshift(session);
   saveDB();
-  syncToSheets(linkExtractedPhrases, dateStr, 'link');
-  alert(`✓ ${linkExtractedPhrases.length}개 표현 저장 완료! 퀴즈로 연동됐어요.`);
-  // 바로 퀴즈로 이동
+  showLoading('Google Sheets에 저장 중…');
+  await syncToSheets(linkExtractedPhrases, dateStr, 'link');
+  hideLoading();
   currentPhrases = linkExtractedPhrases;
   const pool = buildWeightedPool(linkExtractedPhrases, Math.min(10, linkExtractedPhrases.length));
   document.getElementById('phrasesTitle').textContent = `🔗 ${domain} 분석`;
   document.getElementById('phrasesMeta').textContent = `표현 ${linkExtractedPhrases.length}개`;
-  if (confirm('저장됐어요! 지금 바로 퀴즈를 풀어볼까요?')) {
+  if (confirm(`✓ ${linkExtractedPhrases.length}개 표현 저장 완료!\n지금 바로 퀴즈를 풀어볼까요?`)) {
     startQuizWith(pool);
   } else {
     switchTab('home');
@@ -1650,9 +1657,10 @@ JSON 배열만 반환 (id는 p${String(startId).padStart(3,'0')}부터):
     const idx = db.sessions.findIndex(s => s.id === session.id);
     if (idx >= 0) db.sessions[idx] = session; else db.sessions.unshift(session);
     saveDB();
+    showLoading('Google Sheets에 저장 중…');
+    await syncToSheets(phrases, session.date, 'lesson');
     hideLoading();
     renderHome();
-    syncToSheets(phrases, session.date, 'lesson');
   } catch(e) { hideLoading(); alert('오류: ' + e.message); }
 }
 
@@ -2054,37 +2062,106 @@ function retryQuiz() {
 }
 
 // ══════════════════════════════════
-// GOOGLE SHEETS SYNC
+// GOOGLE SHEETS — 단일 소스 구조
 // ══════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz06wMxNsR7FK4gHoQmbxQ9N1WV9HfcQWKat_fbZoGbcQqabV5JuQxcrIjDyyXT79re/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw_6rXrXR50L7MXN6NauaVh6gZUzbZEtxpvI9Qy4aqZBf9SbUhf230orrj_yB-PHBQ5/exec';
 
 async function sheetsPost(payload) {
-  const res = await fetch(SHEETS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+  const res = await fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
   return res.json();
 }
+
+// 표현 저장 — 항상 Sheets에 먼저 저장, 로컬은 캐시
 async function syncToSheets(phrases, date, source) {
-  try { await sheetsPost({ action: 'savePhrases', phrases: phrases.map(p => ({ ...p, date, source: source || 'upload' })) }); } catch(e) { console.warn('Sheets sync failed:', e.message); }
-}
-async function syncStatsToSheets(phraseId, correct) {
-  try { await sheetsPost({ action: 'updateStats', phraseId, correct }); } catch(e) { console.warn('Stats sync failed:', e.message); }
-}
-async function loadFromSheets() {
   try {
-    showLoading('Google Sheets에서 불러오는 중…');
+    const result = await sheetsPost({
+      action: 'savePhrases',
+      phrases: phrases.map(p => ({ ...p, date, source: source || 'upload' }))
+    });
+    console.log('Sheets 저장 완료:', result);
+    return result;
+  } catch(e) {
+    console.warn('Sheets 저장 실패 (로컬에만 저장됨):', e.message);
+  }
+}
+
+// 오답 통계 업데이트 → Sheets 반영
+async function syncStatsToSheets(phraseId, correct) {
+  try {
+    await sheetsPost({ action: 'updateStats', phraseId, correct });
+  } catch(e) {
+    console.warn('Stats sync failed:', e.message);
+  }
+}
+
+// 앱 시작 시 Sheets에서 자동 로드 → 로컬 캐시 교체
+async function loadSheetsData(silent) {
+  try {
+    if (!silent) showLoading('데이터 불러오는 중…');
     const res = await fetch(SHEETS_URL + '?action=loadPhrases');
     const data = await res.json();
-    if (!data.phrases || !data.phrases.length) { hideLoading(); alert('시트에 저장된 표현이 없어요'); return; }
+    if (!data.phrases || !data.phrases.length) {
+      if (!silent) hideLoading();
+      return false;
+    }
+
+    // Sheets 데이터를 날짜별 세션으로 그룹핑
     const sessionMap = {};
-    data.phrases.forEach(p => { const date = p.date || '날짜 없음'; if (!sessionMap[date]) sessionMap[date] = []; sessionMap[date].push(p); });
+    data.phrases.forEach(p => {
+      const date = p.date || '날짜 없음';
+      if (!sessionMap[date]) sessionMap[date] = [];
+      sessionMap[date].push(p);
+    });
+
+    // 기존 Sheets 기반 세션만 교체 (로컬 전용 세션은 유지)
+    db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
     Object.entries(sessionMap).forEach(([date, phrases]) => {
       const sessId = 'sheets_' + date.replace(/\./g, '');
-      const existing = db.sessions.findIndex(s => s.id === sessId);
-      const session = { id: sessId, date, label: date, dayOfWeek: '', topics: [...new Set(phrases.map(p => p.topic || '일상'))], phrases };
-      if (existing >= 0) db.sessions[existing] = session; else db.sessions.unshift(session);
+      const dayNames = ['일','월','화','수','목','금','토'];
+      let dayOfWeek = '';
+      try {
+        const parts = date.split('.');
+        if (parts.length === 3) dayOfWeek = dayNames[new Date(`${parts[0]}-${parts[1]}-${parts[2]}`).getDay()];
+      } catch(e) {}
+      db.sessions.unshift({
+        id: sessId,
+        date,
+        label: date,
+        dayOfWeek,
+        topics: [...new Set(phrases.map(p => p.topic || '일상'))],
+        phrases
+      });
     });
-    saveDB(); hideLoading(); renderHome();
-    alert(`✓ ${data.phrases.length}개 표현을 Sheets에서 불러왔어요!`);
-  } catch(e) { hideLoading(); alert('불러오기 실패: ' + e.message); }
+
+    // 최신순 정렬
+    db.sessions.sort((a, b) => b.date.localeCompare(a.date));
+
+    // wrongCount도 Sheets 데이터로 동기화
+    data.phrases.forEach(p => {
+      if (p.wrong_count && parseInt(p.wrong_count) > 0) {
+        db.wrongCount[p.id] = parseInt(p.wrong_count);
+      }
+    });
+
+    saveDB();
+    if (!silent) { hideLoading(); renderHome(); }
+    return true;
+  } catch(e) {
+    if (!silent) { hideLoading(); alert('데이터 로드 실패: ' + e.message); }
+    console.warn('Sheets load failed:', e.message);
+    return false;
+  }
+}
+
+// 수동 새로고침 버튼
+async function refreshFromSheets() {
+  const ok = await loadSheetsData(false);
+  if (ok) renderHome();
+  else alert('Sheets에 저장된 데이터가 없어요.\n학습 탭에서 수업을 먼저 추가해보세요!');
 }
 
 // ══════════════════════════════════
@@ -2096,12 +2173,16 @@ function shuffleArr(arr) {
 }
 
 // ══════════════════════════════════
-// INIT
+// INIT — Sheets가 단일 소스
 // ══════════════════════════════════
 loadKey();
-loadDB();
+loadDB();       // 로컬 캐시 로드 (빠른 초기 렌더)
 loadCharacter();
-renderHome();
+renderHome();   // 캐시 기반으로 먼저 그림
+
+// 백그라운드에서 Sheets 최신 데이터 로드
+loadSheetsData(true).then(ok => { if (ok) renderHome(); });
+
 </script>
 </body>
 </html>
