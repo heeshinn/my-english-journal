@@ -1135,10 +1135,22 @@ async function processUpload() {
   if (!apiKey) { alert('API 키를 먼저 설정해주세요'); return; }
   const dateVal = document.getElementById('uploadDate').value;
   const selectedTopics = [...document.querySelectorAll('.char-chip[data-group="uptopic"].selected')].map(b => b.dataset.val);
-  const topic = selectedTopics.length ? selectedTopics.join('/') : '일상';
+  const topicHint = selectedTopics.length ? selectedTopics.join(', ') : '미지정';
   if (!dateVal) { alert('날짜를 선택해주세요'); return; }
   showLoading('수업 내용 분석 중... (1/2)');
   const charCtx = getCharacterPrompt();
+  const TOPIC_GUIDE = `
+【주제 분류 기준 — 반드시 아래 6개 대분류 중 하나만 사용】
+- 일상: 루틴, 생활, 잡담, SNS, 취미, 여행, 인간관계, 감정표현
+- 육아: 아이, 교육, 학교, 육아 고민, 가정생활
+- 업무: 미팅, 커리어, 비즈니스, 협업, 발표, 이메일, 의사소통
+- 예술: 음악, 미술, 공연, 영화, 문학, 아티스트 활동, 문화
+- 디자인·기획: 건축, 공간, 인테리어, 프로젝트 기획, 브랜딩, UX
+- 웰니스: 건강, 운동, 멘탈, 심리, 명상, 자기계발
+
+업로더가 선택한 주요 주제 힌트: ${topicHint}
+표현 내용을 보고 위 6개 중 가장 적합한 것으로 분류해줘. 새로운 주제를 만들지 말 것.`;
+
   const makePrompt = (text, startId) => `다음 영어 수업 녹취에서 복습할 표현을 추출해줘.${charCtx}
 【추출 우선순위】
 1순위: 튜터가 직접 교정해준 학생 문장 — 반드시 포함
@@ -1146,9 +1158,11 @@ async function processUpload() {
 3순위: 학생이 수업 중 반복해서 틀린 패턴
 【제외 기준】중학교 수준 기본 단어/문장, 난이도 easy 항목, 단순 명사/어휘 나열
 난이도 medium/hard 만 추출.
+${TOPIC_GUIDE}
 ${text}
 JSON 배열만 반환:
-[{"id":"p${String(startId).padStart(3,'0')}","type":"correction","topic":"${topic}","original":null,"english":"","korean":"","difficulty":"medium","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]`;
+[{"id":"p${String(startId).padStart(3,'0')}","type":"correction","topic":"일상","original":null,"english":"","korean":"","difficulty":"medium","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]
+topic 값은 반드시 일상/육아/업무/예술/디자인·기획/웰니스 중 하나만 사용.`;
 
   const callApi = async (prompt) => {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1168,21 +1182,16 @@ JSON 배열만 반환:
     showLoading('수업 내용 분석 중... (2/2)');
     const p2 = await callApi(makePrompt(lines.slice(half).join('\n'), p1.length + 1));
     const phrases = [...p1, ...p2];
-    const sessId = 'sess_' + dateVal.replace(/-/g, '');
-    const dayNames = ['일','월','화','수','목','금','토'];
-    const session = {
-      id: sessId, date: dateVal.replace(/-/g, '.'),
-      label: dateVal.slice(5).replace('-', '월 ') + '일',
-      dayOfWeek: dayNames[new Date(dateVal).getDay()],
-      topics: [...new Set(phrases.map(p => p.topic))], phrases
-    };
-    const idx = db.sessions.findIndex(s => s.id === sessId);
-    if (idx >= 0) db.sessions[idx] = session; else db.sessions.unshift(session);
-    saveDB();
 
     // Sheets에 저장 (단일 소스)
     showLoading('Google Sheets에 저장 중…');
-    await syncToSheets(phrases, session.date, 'upload');
+    const dateForSheets = dateVal.replace(/-/g, '.');
+    await syncToSheets(phrases, dateForSheets, 'upload');
+
+    // 로컬 캐시 비우고 Sheets에서 다시 로드 (중복 방지)
+    db.sessions = db.sessions.filter(s => s.id.startsWith('sheets_') === false);
+    saveDB();
+    await loadSheetsData(true);
 
     hideLoading();
     uploadedText = '';
@@ -1333,8 +1342,14 @@ async function saveChatToReview() {
   const convo = chatHistory.map(m => `${m.role === 'user' ? '학생' : '튜터'}: ${m.content}`).join('\n');
   const prompt = `다음 영어 대화에서 복습할 표현을 10개 추출해줘.${getCharacterPrompt()}
 ${convo}
+
+【주제 분류 기준 — 반드시 아래 6개 중 하나만 사용】
+일상(루틴·생활·잡담·여행·인간관계) / 육아(아이·교육·가정) / 업무(미팅·커리어·비즈니스·의사소통) / 예술(음악·미술·공연·문화) / 디자인·기획(건축·공간·프로젝트) / 웰니스(건강·운동·멘탈)
+새로운 주제를 만들지 말 것.
+
 JSON 배열만 반환:
-[{"id":"c001","type":"correction","topic":"일상","original":null,"english":"","korean":"","difficulty":"medium","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]`;
+[{"id":"c001","type":"correction","topic":"일상","original":null,"english":"","korean":"","difficulty":"medium","quiz":{"fill_sentence":null,"fill_answer":"","fill_choices":[],"ko_sentence":""}}]
+topic 값은 반드시 일상/육아/업무/예술/디자인·기획/웰니스 중 하나만 사용.`;
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1345,12 +1360,11 @@ JSON 배열만 반환:
     const phrases = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim());
     const today = new Date();
     const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
-    const dayNames = ['일','월','화','수','목','금','토'];
-    const session = { id: 'chat_' + Date.now(), date: dateStr, label: 'AI 대화', dayOfWeek: dayNames[today.getDay()], topics: [...new Set(phrases.map(p => p.topic))], phrases };
-    db.sessions.unshift(session);
-    saveDB();
     showLoading('Google Sheets에 저장 중…');
     await syncToSheets(phrases, dateStr, 'chat');
+    db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
+    saveDB();
+    await loadSheetsData(true);
     hideLoading();
     alert(`✓ ${phrases.length}개 표현을 저장했어요!`);
     switchTab('home');
@@ -1376,16 +1390,17 @@ async function fetchAndExtract() {
   const url = document.getElementById('linkInput').value.trim();
   if (!url) return;
 
-  const selectedTopic = document.querySelector('.char-chip[data-group="linktopic"].selected')?.dataset.val || '일상';
+  const selectedTopics = [...document.querySelectorAll('.char-chip[data-group="linktopic"].selected')].map(b => b.dataset.val);
+  const topicHint = selectedTopics.length ? selectedTopics.join(', ') : '미지정';
   const typeLabels = { article: '아티클', youtube: 'YouTube 영상', social: 'SNS/커뮤니티', other: '컨텐츠' };
   const typeLabel = typeLabels[selectedLinkType] || '컨텐츠';
 
   showLoading(`${typeLabel} 분석 중...`);
 
-  const prompt = `다음 URL의 영어 컨텐츠를 분석하기 위해 핵심 표현을 추출해줘.
+  const prompt = `다음 URL의 영어 컨텐츠를 분석해서 핵심 표현을 추출해줘.
 URL: ${url}
 컨텐츠 유형: ${typeLabel}
-주제: ${selectedTopic}
+주제 힌트: ${topicHint}
 ${getCharacterPrompt()}
 
 이 컨텐츠에서 배울 수 있는 자연스러운 영어 표현, 관용구, 문장 패턴을 15개 추출해줘.
@@ -1393,15 +1408,18 @@ ${getCharacterPrompt()}
 
 【추출 기준】
 - 원어민이 실제로 쓰는 자연스러운 표현 우선
-- 이 컨텐츠의 주제·스타일에 맞는 표현
 - medium/hard 난이도만 (easy 제외)
 - 각 표현마다 예시 문장 1개 필수
+
+【주제 분류 기준 — 반드시 아래 6개 중 하나만 사용】
+일상(루틴·생활·잡담·여행·인간관계) / 육아(아이·교육·가정) / 업무(미팅·커리어·비즈니스·의사소통) / 예술(음악·미술·공연·문화) / 디자인·기획(건축·공간·프로젝트) / 웰니스(건강·운동·멘탈)
+새로운 주제를 만들지 말 것.
 
 JSON 배열만 반환:
 [{
   "id":"lnk001",
   "type":"expression",
-  "topic":"${selectedTopic}",
+  "topic":"일상",
   "original":null,
   "english":"핵심 표현/문장",
   "korean":"한국어 뜻",
@@ -1413,7 +1431,8 @@ JSON 배열만 반환:
     "fill_choices":["정답 포함 4지선다"],
     "ko_sentence":"한→영 퀴즈용 한국어 문장"
   }
-}]`;
+}]
+topic 값은 반드시 일상/육아/업무/예술/디자인·기획/웰니스 중 하나만 사용.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1476,10 +1495,11 @@ async function saveLinkPhrases() {
     phrases: linkExtractedPhrases,
     sourceUrl: url
   };
-  db.sessions.unshift(session);
+  db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
   saveDB();
   showLoading('Google Sheets에 저장 중…');
   await syncToSheets(linkExtractedPhrases, dateStr, 'link');
+  await loadSheetsData(true);
   hideLoading();
   currentPhrases = linkExtractedPhrases;
   const pool = buildWeightedPool(linkExtractedPhrases, Math.min(10, linkExtractedPhrases.length));
