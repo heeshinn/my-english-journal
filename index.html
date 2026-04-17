@@ -2211,10 +2211,16 @@ async function sheetsPost(payload) {
 // 표현 저장 — 항상 Sheets에 먼저 저장, 로컬은 캐시
 async function syncToSheets(phrases, date, source) {
   try {
-    const result = await sheetsPost({
-      action: 'savePhrases',
-      phrases: phrases.map(p => ({ ...p, date, source: source || 'upload' }))
-    });
+    // expression 비어있으면 fill_answer에서 가져오기
+    const cleaned = phrases.map(p => ({
+      ...p,
+      expression: p.expression && typeof p.expression === 'string' && !p.expression.match(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/)
+        ? p.expression
+        : (p.quiz?.fill_answer || ''),
+      date,
+      source: source || 'upload'
+    }));
+    const result = await sheetsPost({ action: 'savePhrases', phrases: cleaned });
     console.log('Sheets 저장 완료:', result);
     return result;
   } catch(e) {
