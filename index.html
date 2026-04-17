@@ -505,6 +505,24 @@ nav {
 .char-save-btn:hover { background: #1E3F2A; }
 .char-saved-msg { text-align: center; font-size: 13px; color: var(--accent); min-height: 20px; }
 
+/* ── FLASHCARD ── */
+.flash-card { width: 100%; min-height: 280px; perspective: 1000px; cursor: pointer; margin-bottom: 24px; }
+.flash-card-inner { position: relative; width: 100%; min-height: 280px; transition: transform .5s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
+.flash-card-inner.flipped { transform: rotateY(180deg); }
+.flash-card-front, .flash-card-back { position: absolute; width: 100%; min-height: 280px; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--r); padding: 32px 24px 28px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.flash-card-front { background: var(--ink); color: var(--paper); border: 1px solid rgba(255,255,255,.08); }
+.flash-card-back { background: var(--accent); color: white; transform: rotateY(180deg); }
+.flash-card-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: .5; }
+.flash-card-ko { font-family: 'Playfair Display', serif; font-size: 26px; line-height: 1.4; font-weight: 500; }
+.flash-card-en { font-family: 'Playfair Display', serif; font-size: 22px; line-height: 1.5; font-weight: 500; }
+.flash-card-example { font-size: 12px; opacity: .75; line-height: 1.7; margin-top: 4px; font-style: italic; border-top: 1px solid rgba(255,255,255,.2); padding-top: 12px; }
+.flash-card-hint { font-size: 12px; opacity: .35; margin-top: auto; padding-top: 16px; }
+.flash-actions { display: flex; gap: 12px; }
+.flash-btn { flex: 1; padding: 16px; border: none; border-radius: var(--r); font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Outfit', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s; }
+.flash-btn:active { transform: scale(.97); }
+.flash-btn-no { background: var(--red-light); color: var(--red); }
+.flash-btn-yes { background: var(--accent-light); color: var(--accent); }
+
 /* ── LOADING overlay ── */
 #loadingOverlay { display: none; position: fixed; inset: 0; background: var(--paper); z-index: 300; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 #loadingOverlay.show { display: flex; }
@@ -613,14 +631,19 @@ nav {
   <div class="home-body">
     <div class="home-left">
 
-      <!-- [FIX 1] 랜덤 퀴즈 버튼 — 날짜별 위 -->
+      <!-- 퀴즈 + 플래시카드 버튼 -->
       <div class="quick-quiz-wrap">
         <button class="quick-quiz-btn" onclick="startSmartQuiz()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
-          지금 바로 퀴즈 풀기
-          <span class="quick-quiz-badge">오답 가중치 반영</span>
+          Expression Quiz
+        </button>
+        <button class="quick-quiz-btn flashcard-btn" onclick="startFlashCards()" style="margin-top:8px;background:var(--ink);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+          Flash Cards
         </button>
       </div>
 
@@ -945,6 +968,48 @@ nav {
     </div>
     <button class="char-save-btn" onclick="saveCharacter()">설정 저장하기</button>
     <div class="char-saved-msg" id="charSavedMsg"></div>
+  </div>
+</div>
+
+<!-- ══ FLASHCARD ══ -->
+<div class="screen" id="flashScreen">
+  <div class="sub-header">
+    <span class="back-btn" onclick="goHome()">←</span>
+    <div class="sub-header-info">
+      <h3>장기기억 플래시카드</h3>
+      <p id="flashMeta"></p>
+    </div>
+    <span id="flashCounter" style="color:rgba(255,255,255,.5);font-size:13px;"></span>
+  </div>
+
+  <div style="padding:24px 16px 120px;">
+    <!-- 카드 -->
+    <div class="flash-card" id="flashCard" onclick="flipCard()">
+      <div class="flash-card-inner" id="flashCardInner">
+        <div class="flash-card-front">
+          <div class="flash-card-label">뜻</div>
+          <div class="flash-card-ko" id="flashKo"></div>
+          <div class="flash-card-hint">탭해서 영어 확인 →</div>
+        </div>
+        <div class="flash-card-back">
+          <div class="flash-card-label">표현</div>
+          <div class="flash-card-en" id="flashEn"></div>
+          <div class="flash-card-example" id="flashExample"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 알았어요/몰랐어요 버튼 — 뒤집은 후만 보임 -->
+    <div class="flash-actions" id="flashActions" style="display:none;">
+      <button class="flash-btn flash-btn-no" onclick="flashAnswer(false)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Not yet
+      </button>
+      <button class="flash-btn flash-btn-yes" onclick="flashAnswer(true)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Got it
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2182,6 +2247,97 @@ async function refreshFromSheets() {
   const ok = await loadSheetsData(false);
   if (ok) renderHome();
   else alert('Sheets에 저장된 데이터가 없어요.\n학습 탭에서 수업을 먼저 추가해보세요!');
+}
+
+// ══════════════════════════════════
+// FLASHCARD
+// ══════════════════════════════════
+let flashCards = [];
+let flashIndex = 0;
+let flashKnown = 0;
+let flashUnknown = 0;
+let flashIsFlipped = false;
+
+function startFlashCards() {
+  const all = db.sessions.flatMap(s => s.phrases);
+  if (!all.length) { alert('먼저 수업을 불러오세요'); return; }
+  // 오답 많은 것 우선, 나머지 랜덤 섞기
+  flashCards = shuffleArr([...all]).sort((a, b) => (db.wrongCount[b.id] || 0) - (db.wrongCount[a.id] || 0));
+  flashIndex = 0;
+  flashKnown = 0;
+  flashUnknown = 0;
+  showScreen('flashScreen');
+  renderFlashCard();
+}
+
+function renderFlashCard() {
+  const card = flashCards[flashIndex];
+  if (!card) return;
+  const batchStart = Math.floor(flashIndex / 10) * 10;
+  const batchEnd = Math.min(batchStart + 10, flashCards.length);
+  document.getElementById('flashMeta').textContent = `${flashIndex + 1} / ${batchEnd}번째`;
+  document.getElementById('flashCounter').textContent = `총 ${flashCards.length}개`;
+
+  document.getElementById('flashKo').textContent = card.korean;
+  document.getElementById('flashEn').textContent = card.english;
+
+  // 예시 문장 — fill_sentence에서 정답 블랭크 처리
+  let example = '';
+  if (card.quiz?.fill_sentence) {
+    example = card.quiz.fill_sentence.replace('___', '_ _ _');
+  } else if (card.quiz?.ko_sentence) {
+    example = card.quiz.ko_sentence;
+  }
+  const exEl = document.getElementById('flashExample');
+  exEl.textContent = example;
+  exEl.style.display = example ? 'block' : 'none';
+
+  // 카드 앞면으로 리셋
+  flashIsFlipped = false;
+  document.getElementById('flashCardInner').classList.remove('flipped');
+  document.getElementById('flashActions').style.display = 'none';
+}
+
+function flipCard() {
+  if (flashIsFlipped) return;
+  flashIsFlipped = true;
+  document.getElementById('flashCardInner').classList.add('flipped');
+  setTimeout(() => {
+    document.getElementById('flashActions').style.display = 'flex';
+  }, 300);
+}
+
+function flashAnswer(known) {
+  const card = flashCards[flashIndex];
+  if (known) {
+    flashKnown++;
+    if ((db.wrongCount[card.id] || 0) > 0) db.wrongCount[card.id]--;
+  } else {
+    flashUnknown++;
+    db.wrongCount[card.id] = (db.wrongCount[card.id] || 0) + 1;
+  }
+  saveDB();
+  syncStatsToSheets(card.id, known);
+  flashIndex++;
+
+  // 10개 배치 완료
+  if (flashIndex > 0 && flashIndex % 10 === 0 && flashIndex < flashCards.length) {
+    if (confirm(`${flashIndex}개 완료! 🎉\n알았어요 ✓ ${flashKnown}개 · 몰랐어요 ✗ ${flashUnknown}개\n\n계속 이어갈까요?`)) {
+      renderFlashCard();
+    } else {
+      goHome();
+    }
+    return;
+  }
+
+  // 전체 완료
+  if (flashIndex >= flashCards.length) {
+    alert(`플래시카드 전부 완료! 🎉\n\n알았어요 ✓ ${flashKnown}개\n몰랐어요 ✗ ${flashUnknown}개\n\n틀린 표현은 다음 퀴즈에서 더 자주 나와요!`);
+    goHome();
+    return;
+  }
+
+  renderFlashCard();
 }
 
 // ══════════════════════════════════
