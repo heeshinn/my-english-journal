@@ -352,7 +352,12 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 
 <!-- Nav -->
 <nav>
-  <div class="nav-logo"><span class="nav-logo-dot"></span> <span id="navLogoText" style="opacity:0;transition:opacity .2s;">My English Journal</span></div>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <button id="navBackBtn" onclick="goBack()" style="display:none;background:none;border:none;cursor:pointer;padding:6px 8px 6px 2px;color:var(--ink2);font-size:20px;line-height:1;transition:color .15s;" aria-label="뒤로가기">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="nav-logo"><span class="nav-logo-dot"></span> <span id="navLogoText" style="opacity:0;transition:opacity .2s;">My English Journal</span></div>
+  </div>
   <button class="nav-key-btn" id="keyBtn" onclick="openKeyModal()">API Key</button>
 </nav>
 
@@ -945,12 +950,43 @@ function saveApiKey() {
 // ══════════════════════════════════
 // SCREEN NAV
 // ══════════════════════════════════
+// ── 화면 히스토리 스택 (뒤로가기) ──
+const screenHistory = [];
+const TAB_SCREENS = ['homeScreen', 'learnScreen', 'characterScreen'];
+
 function showScreen(id) {
+  const current = document.querySelector('.screen.active')?.id;
+  if (current && current !== id) {
+    screenHistory.push(current);
+    if (screenHistory.length > 10) screenHistory.shift();
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  updateBackBtn();
 }
-function goHome() { showScreen('homeScreen'); renderHome(); }
+
+function updateBackBtn() {
+  const btn = document.getElementById('navBackBtn');
+  if (!btn) return;
+  const current = document.querySelector('.screen.active')?.id;
+  const showOn = ['quizScreen', 'flashScreen', 'resultScreen'];
+  btn.style.display = showOn.includes(current) ? 'block' : 'none';
+}
+
+function goBack() {
+  if (!screenHistory.length) return;
+  const prev = screenHistory.pop();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(prev)?.classList.add('active');
+  window.scrollTo(0, 0);
+  if (prev === 'homeScreen') { setAccent('home'); renderHome(); }
+  else if (prev === 'learnScreen') setAccent('learn');
+  else if (prev === 'characterScreen') setAccent('character');
+  updateBackBtn();
+}
+
+function goHome() { switchTab('home'); screenHistory.length = 0; }
 function goToPhrases() { showScreen('phrasesScreen'); }
 
 function showLoading(msg) {
@@ -1589,6 +1625,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   setAccent(tab);
+  screenHistory.length = 0; // 탭 전환 시 히스토리 초기화
   if (tab === 'home') { showScreen('homeScreen'); renderHome(); }
   else if (tab === 'learn') {
     showScreen('learnScreen');
@@ -1606,7 +1643,7 @@ const LESSON_RAW = `2026.04.13 영어 수업 (학생=참석자1, 튜터=참석�
 주요 장면:
 1. 참석자1: "the place we can visit is restrained when we go alone" → 튜터: restrained는 holding back, constrained가 맞음 (boundary/제약)
 2. 참석자1: "I cannot do much of things when traveling alone" → 튜터: "you can't do as many things when traveling solo"
-3. 참석자1: "I just want to twist my daily life" → 튜터: "switch it up" / "switch it up a bit"이 자연스러움. monotonous routine을 switch it up.
+3. 참석자1: "I just want to refresh my daily life" → 튜터: "switch it up" / "switch it up a bit"이 자연스러움. monotonous routine을 switch it up.
 4. 튜터 설명: tailor vs alter — tailor은 누군가 preferences에 맞게 변경, alter은 그냥 조금 바꾸는 것
 5. 튜터 설명: rose-tinted glasses — 과거를 돌아볼 때 좋은 것만 기억하는 경향. "We tend to look back on things through rose-tinted glasses."
 6. 참석자1: "I just don't want to do nothing" → 이중부정 오류. "I just want to do nothing" 또는 "I don't want to do anything"
