@@ -2190,7 +2190,7 @@ function retryQuiz() {
 // ══════════════════════════════════
 // GOOGLE SHEETS — 단일 소스 구조
 // ══════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw_6rXrXR50L7MXN6NauaVh6gZUzbZEtxpvI9Qy4aqZBf9SbUhf230orrj_yB-PHBQ5/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwS5c2gdg170Vsm-opGZGfy_J82iwFzBhzHUS6W_4ih23u07iQGxyx5Z2DsQx9RnWpD/exec';
 
 async function sheetsPost(payload) {
   const res = await fetch(SHEETS_URL, {
@@ -2408,7 +2408,7 @@ function flashAnswer(known) {
 
   // 10개 배치 완료
   if (flashIndex > 0 && flashIndex % 10 === 0 && flashIndex < flashCards.length) {
-    if (confirm(`${flashIndex}개 완료! 🎉\n알았어요 ✓ ${flashKnown}개 · 몰랐어요 ✗ ${flashUnknown}개\n\n계속 이어갈까요?`)) {
+    if (confirm(`${flashIndex} cards done! 🎉\nGot it ✓ ${flashKnown} · Not yet ✗ ${flashUnknown}\n\nKeep going?`)) {
       renderFlashCard();
     } else {
       goHome();
@@ -2418,7 +2418,7 @@ function flashAnswer(known) {
 
   // 전체 완료
   if (flashIndex >= flashCards.length) {
-    alert(`플래시카드 전부 완료! 🎉\n\n알았어요 ✓ ${flashKnown}개\n몰랐어요 ✗ ${flashUnknown}개\n\n틀린 표현은 다음 퀴즈에서 더 자주 나와요!`);
+    alert(`All done! 🎉\n\nGot it ✓ ${flashKnown}\nNot yet ✗ ${flashUnknown}\n\nCards you missed will show up more in your quiz!`);
     goHome();
     return;
   }
