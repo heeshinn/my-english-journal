@@ -161,9 +161,9 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .choices-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
 .choice { padding: 15px 18px; border: 1.5px solid var(--border); border-radius: var(--r); background: var(--bg); font-size: 14px; font-weight: 500; cursor: pointer; text-align: left; font-family: "DM Sans", sans-serif; color: var(--ink); line-height: 1.5; transition: all .12s; box-shadow: var(--shadow); }
 .choice:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-light); }
-.choice.correct { border-color: var(--green); background: var(--green-light); color: #166534; font-weight: 600; }
-.choice.wrong { border-color: var(--red); background: var(--red-light); color: #991B1B; }
-.choice.reveal { border-color: var(--green); background: var(--green-light); color: #166534; }
+.choice.correct { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.choice.wrong { border-color: var(--border); background: var(--surface); color: var(--muted); }
+.choice.reveal { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
 .choice:disabled { cursor: not-allowed; }
 .typing-wrap { display: flex; flex-direction: column; gap: 10px; }
 .typing-input { width: 100%; padding: 15px 16px; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 16px; font-family: "DM Sans", sans-serif; background: var(--surface); color: var(--ink); }
@@ -173,7 +173,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .full-wrap textarea { width: 100%; min-height: 100px; padding: 15px 16px; border: 1.5px solid var(--border); border-radius: var(--r); font-size: 15px; font-family: "DM Sans", sans-serif; background: var(--surface); color: var(--ink); resize: vertical; line-height: 1.6; margin-bottom: 10px; }
 .full-wrap textarea:focus { outline: none; border-color: var(--accent); }
 .quiz-action-row { display: flex; gap: 8px; }
-.btn-hint { flex: 1; padding: 13px; background: var(--gold-light); color: var(--gold); border: 1.5px solid #FDE68A; border-radius: var(--rs); font-size: 13px; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; }
+.btn-hint { flex: 1; padding: 13px; background: var(--accent-light); color: var(--accent); border: 1.5px solid var(--accent); border-radius: var(--rs); font-size: 13px; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; transition: background .15s; }
 .btn-check-q { width: 100%; padding: 15px; background: var(--ink); color: white; border: none; border-radius: var(--r); font-size: 14px; font-weight: 700; cursor: pointer; font-family: "DM Sans", sans-serif; }
 .btn-check-q:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
 .blank-slots {
@@ -202,11 +202,11 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 }
 .feedback-panel { display: none; margin-top: 16px; padding: 16px 18px; border-radius: var(--r); font-size: 13px; line-height: 1.7; }
 .feedback-panel.show { display: block; }
-.feedback-panel.ok { background: var(--green-light); border: 1.5px solid #BBF7D0; color: #166534; }
-.feedback-panel.fail { background: var(--red-light); border: 1.5px solid #FECACA; color: #991B1B; }
+.feedback-panel.ok { background: var(--accent-light); border: 1.5px solid var(--accent); color: var(--accent); }
+.feedback-panel.fail { background: var(--surface); border: 1.5px solid var(--border); color: var(--muted); }
 .feedback-ans-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; opacity: .6; margin-bottom: 4px; }
-.feedback-ans { font-family: "DM Sans", sans-serif; font-size: 17px; margin-bottom: 6px; line-height: 1.4; }
-.feedback-note { font-size: 12px; opacity: .8; }
+.feedback-ans { font-size: 15px; font-weight: 600; margin-bottom: 4px; line-height: 1.5; }
+.feedback-note { font-size: 12px; opacity: .75; }
 .btn-next-q { display: none; width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: var(--r); font-size: 14px; font-weight: 700; cursor: pointer; font-family: "DM Sans", sans-serif; margin-top: 14px; transition: background .3s; }
 .btn-next-q.show { display: block; }
 #resultScreen { padding: 0 var(--side) 80px; }
@@ -339,8 +339,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .flash-actions { display: flex; gap: 12px; }
 .flash-btn { flex: 1; padding: 18px; border: none; border-radius: var(--r); font-size: 15px; font-weight: 700; cursor: pointer; font-family: "DM Sans", sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s; }
 .flash-btn:active { transform: scale(.97); }
-.flash-btn-no { background: var(--red-light); color: var(--red); border: 1.5px solid #FECACA; }
-.flash-btn-yes { background: var(--green-light); color: #166534; border: 1.5px solid #BBF7D0; }
+.flash-btn-no { background: var(--surface); color: var(--ink2); border: 1.5px solid var(--border); }
+.flash-btn-yes { background: var(--ink); color: white; border: 1.5px solid var(--ink); }
 #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 300; flex-direction: column; align-items: center; justify-content: center; gap: 18px; backdrop-filter: blur(6px); }
 #loadingOverlay.show { display: flex; }
 .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
@@ -1972,7 +1972,7 @@ function renderQ() {
 
   document.getElementById('qInputArea').innerHTML = `
     <div class="quiz-action-row" style="margin-top:16px;">
-      <button class="btn-hint" onclick="showHint()">💡 힌트 (4지선다)</button>
+      <button class="btn-hint" onclick="showHint()">힌트</button>
       <button class="btn-check-q" style="flex:2;" onclick="checkTyping()">확인</button>
     </div>
     <div id="choicesArea" style="display:none;margin-top:10px;">
@@ -1997,7 +1997,7 @@ function showHint() {
   choicesArea.style.display = 'block';
   document.getElementById('choicesList').innerHTML = shuffleArr([...(q.choices || generateChoices(q.answer))]).map(c =>
     `<button class="choice" onclick="checkHintChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`).join('');
-  document.getElementById('qTypeLabel').textContent = '4지선다 (힌트 사용)';
+  document.getElementById('qTypeLabel').textContent = '힌트 사용';
 }
 
 function checkHintChoice(btn, chosen) {
@@ -2045,12 +2045,19 @@ function recordResult(phraseId, correct, qText) {
 function showFeedback(correct, answer, explain) {
   const panel = document.getElementById('feedbackPanel');
   panel.className = 'feedback-panel show ' + (correct ? 'ok' : 'fail');
-  // 정답 표시 + 🔊 읽기 버튼
   const fullSentence = explain || answer;
-  document.getElementById('feedbackAns').innerHTML = `
-    ${fullSentence}
-    <button onclick="speak('${fullSentence.replace(/'/g,"&#39;")}')" style="background:none;border:none;cursor:pointer;font-size:16px;margin-left:6px;vertical-align:middle;opacity:.7;" title="읽어주기">🔊</button>`;
-  document.getElementById('feedbackNote').textContent = correct ? '정답이에요! ✓' : (answer !== explain ? answer : '');
+  document.getElementById('feedbackAns').textContent = fullSentence;
+  document.getElementById('feedbackNote').textContent = correct ? '✓ 정답이에요!' : (answer !== explain ? answer : '');
+
+  // 인라인 입력창 색상 — 정답: 보라, 오답: 회색
+  const inp = document.getElementById('typingIn');
+  if (inp) {
+    if (correct) {
+      inp.style.cssText += ';background:var(--accent-light)!important;border-color:var(--accent)!important;color:var(--accent)!important;';
+    } else {
+      inp.style.cssText += ';background:var(--surface)!important;border-color:var(--border)!important;color:var(--muted)!important;';
+    }
+  }
   document.getElementById('nextQBtn').className = 'btn-next-q show';
 }
 
