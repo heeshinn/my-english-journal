@@ -110,12 +110,15 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .cal-month-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 .cal-month-btn.has-data { color: var(--ink); border-color: var(--accent); }
 .cal-month-btn.placeholder { opacity: .3; cursor: default; pointer-events: none; }
-.cal-day-row { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; min-height: 0; }
-.cal-day-row:empty { display: none; }
-.cal-day-row::-webkit-scrollbar { display: none; }
-.cal-day-btn { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; color: var(--ink); transition: all .12s; display: flex; align-items: center; justify-content: center; }
-.cal-day-btn:hover { background: var(--accent-light); color: var(--accent); }
-.cal-day-btn.active { background: var(--accent); color: white; }
+.cal-grid-wrap { margin-bottom: 14px; }
+.cal-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
+.cal-grid-header span { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); padding: 4px 0; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--muted); position: relative; }
+.cal-cell.has-lesson { font-weight: 700; cursor: pointer; transition: transform .1s, opacity .1s; }
+.cal-cell.has-lesson .cal-dot { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 700; transition: transform .1s; }
+.cal-cell.has-lesson:hover .cal-dot { transform: scale(1.1); opacity: .85; }
+.cal-cell.has-lesson.selected .cal-dot { transform: scale(1.1); box-shadow: 0 0 0 3px var(--accent-light); }
 #phrasesScreen { padding: 0 0 100px; }
 .sub-header { background: var(--bg); padding: 14px var(--side); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
 .back-btn { color: var(--ink2); font-size: 22px; cursor: pointer; line-height: 1; padding: 4px; }
@@ -474,13 +477,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div class="home-section-title">날짜별 수업</div>
         <div class="cal-year-row" id="calYearRow"></div>
         <div class="cal-month-row" id="calMonthRow"></div>
-        <div class="cal-day-row" id="calDayRow"></div>
-        <div class="date-cards" id="dateCards">
-          <div style="text-align:center;padding:28px 16px;color:var(--muted);font-size:13px;">
-            아직 수업 데이터가 없어요<br>
-            <button onclick="initData()" style="margin-top:10px;padding:7px 16px;background:var(--accent);color:white;border:none;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;">첫 수업 불러오기</button>
-          </div>
-        </div>
+        <div class="cal-grid-wrap" id="calGridWrap"></div>
+        <div class="date-cards" id="dateCards"></div>
       </div>
 
       <!-- 주제별 토픽 -->
@@ -1074,17 +1072,17 @@ async function processUpload() {
   if (!dateVal) { alert('날짜를 선택해주세요'); return; }
   showLoading('수업 내용 분석 중... (1/2)');
   const charCtx = getCharacterPrompt();
-  const TOPIC_GUIDE = `
-【주제 분류 기준 — 반드시 아래 6개 대분류 중 하나만 사용】
-- 일상: 루틴, 생활, 잡담, SNS, 취미, 여행, 인간관계, 감정표현
-- 육아: 아이, 교육, 학교, 육아 고민, 가정생활
-- 업무: 미팅, 커리어, 비즈니스, 협업, 발표, 이메일, 의사소통
-- 예술: 음악, 미술, 공연, 영화, 문학, 아티스트 활동, 문화
-- 디자인·기획: 건축, 공간, 인테리어, 프로젝트 기획, 브랜딩, UX
-- 웰니스: 건강, 운동, 멘탈, 심리, 명상, 자기계발
+  const TOPIC_GUIDE = `주제 분류 기준 — 반드시 대주제와 소분류 모두 선택:
 
-업로더가 선택한 주요 주제 힌트: ${topicHint}
-표현 내용을 보고 위 6개 중 가장 적합한 것으로 분류해줘. 새로운 주제를 만들지 말 것.`;
+대주제(topic) / 소분류(topic_sub):
+- 일상: 여가(여행·취미·놀이) / 생활(루틴 외 일상·감정·사람) / 루틴(반복습관·학습·업무루틴)
+- 육아: 놀이(아이 활동·야외) / 교육(학습·성장·미래) / 훈육(행동·습관·규칙)
+- 업무: 프로젝트(업무진행·협업) / 회사·동료(직장생활·조직) / 커리어(취업·성장·목표)
+- 예술: 미술(시각·디자인) / 음악(음악활동·릴리즈·아티스트) / 크리에이티브(창작·문화·정체성)
+- 디자인·기획: 공간(인테리어·건축) / 브랜딩(아이덴티티) / 마케팅(홍보·전략·고객)
+- 웰니스: 운동(신체활동·건강) / 관계(대인관계·감정) / 마인드셋(심리·생각·철학·꿈)
+
+문장 내용을 읽고 가장 핵심 주제로 분류할 것.`;
 
   const datePrefix = dateVal.replace(/-/g, '').slice(2); // e.g. 260413
 
@@ -1097,7 +1095,7 @@ async function processUpload() {
 2. type: "correction" 또는 "expression" 또는 "vocab"
 3. topic: 반드시 다음 중 하나만 → 일상 / 육아 / 업무 / 예술 / 디자인·기획 / 웰니스
 4. original: 학생이 틀리게 말한 원문 (없으면 빈 문자열 "")
-5. english: 완전한 영어 문장 (단어 하나만 절대 X)
+5. english: 실제 활용 예문 (설명문 X, "A means B" / "A vs B" 같은 해설 문장 X, 원어민이 실제로 쓸 법한 자연스러운 예문)
 6. expression: 핵심 영어 표현 2~5단어 (반드시 영어로만, 한국어 절대 X)
 7. korean: expression의 한국어 뜻 (반드시 한국어로만, 영어 절대 X)
 8. difficulty: "medium" 또는 "hard"
@@ -1336,7 +1334,7 @@ async function saveChatToReview() {
 2. type: "correction" 또는 "expression" 또는 "vocab"
 3. topic: 일상 / 육아 / 업무 / 예술 / 디자인·기획 / 웰니스 중 하나만
 4. original: 학생이 틀리게 말한 원문 (없으면 "")
-5. english: 완전한 영어 문장
+5. english: 실제 활용 예문 (설명문 X, 원어민이 실제로 쓰는 자연스러운 문장)
 6. expression: 핵심 영어 표현 2~5단어 (영어로만)
 7. korean: expression의 한국어 뜻 (한국어로만)
 8. difficulty: "medium" 또는 "hard"
@@ -1414,7 +1412,7 @@ ${getCharacterPrompt()}
 2. type: "correction" 또는 "expression" 또는 "vocab"
 3. topic: 일상 / 육아 / 업무 / 예술 / 디자인·기획 / 웰니스 중 하나만
 4. original: 없으면 ""
-5. english: 완전한 영어 문장
+5. english: 실제 활용 예문 (설명문 X, 원어민이 실제로 쓰는 자연스러운 문장)
 6. expression: 핵심 영어 표현 2~5단어 (영어로만)
 7. korean: expression의 한국어 뜻 (한국어로만)
 8. difficulty: "medium" 또는 "hard"
@@ -1730,14 +1728,14 @@ function renderWrongList(allPhrases) {
   const el = document.getElementById('wrongList');
   const wrongPhrases = allPhrases.filter(p => (db.wrongCount[p.id] || 0) > 0).sort((a, b) => (db.wrongCount[b.id] || 0) - (db.wrongCount[a.id] || 0)).slice(0, 8);
   if (!wrongPhrases.length) { el.innerHTML = '<div class="side-empty">퀴즈를 풀면<br>여기에 쌓여요</div>'; return; }
-  el.innerHTML = wrongPhrases.map(p => `<div class="side-item" onclick="showPhraseDetail('${p.id}')"><div class="side-item-en">${p.english || p.expression || ''}</div><div class="side-item-meta"><span class="side-item-badge badge-wrong">✕ ${db.wrongCount[p.id]}회</span>${p.topic}</div></div>`).join('');
+  el.innerHTML = wrongPhrases.map(p => `<div class="side-item" onclick="showPhraseDetail('${p.id}')"><div class="side-item-en">${p.english || p.expression || ''}</div><div class="side-item-meta"><span class="side-item-badge badge-wrong">✕ ${db.wrongCount[p.id]}회</span>${p.topic_sub || p.topic}</div></div>`).join('');
 }
 
 function renderRecentList(allPhrases) {
   const el = document.getElementById('recentList');
   const reviewed = (db.recentReviewed || []).slice(0, 8);
   if (!reviewed.length) { el.innerHTML = '<div class="side-empty">복습한 표현이<br>여기에 표시돼요</div>'; return; }
-  el.innerHTML = reviewed.map(id => { const p = allPhrases.find(x => x.id === id); if (!p) return ''; return `<div class="side-item"><div class="side-item-en">${p.english || p.expression || ''}</div><div class="side-item-meta"><span class="side-item-badge badge-recent">✓</span>${p.topic}</div></div>`; }).filter(Boolean).join('');
+  el.innerHTML = reviewed.map(id => { const p = allPhrases.find(x => x.id === id); if (!p) return ''; return `<div class="side-item"><div class="side-item-en">${p.english || p.expression || ''}</div><div class="side-item-meta"><span class="side-item-badge badge-recent">✓</span>${p.topic_sub || p.topic}</div></div>`; }).filter(Boolean).join('');
 }
 
 function showPhraseDetail(phraseId) {
@@ -1793,24 +1791,60 @@ function renderCalendar() {
     const hasData = yearMap[calYear] && yearMap[calYear][m];
     return `<button class="cal-month-btn ${m === calMonth ? 'active' : ''} ${hasData ? 'has-data' : 'placeholder'}" onclick="selectCalMonth('${m}')">${mn}</button>`;
   }).join('');
-  renderDayCards(yearMap);
+  renderCalGrid(yearMap);
 }
 
 function selectCalYear(y) { calYear = y; calMonth = null; calDay = null; renderCalendar(); }
 function selectCalMonth(m) { calMonth = m; calDay = null; renderCalendar(); }
-function selectCalDay(d) { calDay = calDay === d ? null : d; renderCalendar(); }
+function selectCalDay(d) { calDay = calDay === d ? null : d; renderCalGrid({ [calYear]: { [calMonth]: (db.sessions.filter(s => { const p = s.date.split('.'); return p[0]===calYear && String(parseInt(p[1]))===calMonth; })) } }); renderSessionCards(); }
 
-function renderDayCards(yearMap) {
+function renderCalGrid(yearMap) {
+  const wrap = document.getElementById('calGridWrap');
+  if (!wrap) return;
+
+  const lessonDays = new Set();
+  const sessions = yearMap[calYear] && yearMap[calYear][calMonth] ? yearMap[calYear][calMonth] : [];
+  sessions.forEach(s => lessonDays.add(String(parseInt(s.date.split('.')[2]))));
+
+  const year = parseInt(calYear), month = parseInt(calMonth);
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const DAYS = ['일','월','화','수','목','금','토'];
+
+  let cells = '';
+  for (let i = 0; i < firstDay; i++) cells += `<div class="cal-cell"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = String(d);
+    const hasLesson = lessonDays.has(ds);
+    const isSelected = calDay === String(d).padStart(2,'0') || calDay === ds;
+    if (hasLesson) {
+      cells += `<div class="cal-cell has-lesson ${isSelected ? 'selected' : ''}" onclick="selectCalDay('${String(d).padStart(2,'0')}')"><div class="cal-dot">${d}</div></div>`;
+    } else {
+      cells += `<div class="cal-cell">${d}</div>`;
+    }
+  }
+
+  wrap.innerHTML = `
+    <div class="cal-grid-header">${DAYS.map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>`;
+
+  renderSessionCards();
+}
+
+function renderSessionCards() {
   const dc = document.getElementById('dateCards');
-  let sessions = yearMap[calYear] && yearMap[calYear][calMonth] ? yearMap[calYear][calMonth] : [];
-  const dayRow = document.getElementById('calDayRow');
-  const days = [...new Set(sessions.map(s => s.date.split('.')[2]))].sort((a,b) => a-b);
-  dayRow.innerHTML = days.length > 1 ? days.map(d => `<button class="cal-day-btn ${calDay === d ? 'active' : ''}" onclick="selectCalDay('${d}')">${parseInt(d)}</button>`).join('') : '';
-  if (calDay) sessions = sessions.filter(s => s.date.split('.')[2] === calDay);
   if (!db.sessions.length) {
-    dc.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">아직 수업 데이터가 없어요<br><button onclick="initData()" style="margin-top:12px;padding:8px 18px;background:var(--accent);color:white;border:none;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;">첫 수업 불러오기</button></div>`;
+    dc.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">아직 수업 데이터가 없어요<br>학습 탭에서 수업을 추가해보세요</div>`;
     return;
   }
+  let sessions = db.sessions.filter(s => {
+    const p = s.date.split('.');
+    return p[0] === calYear && String(parseInt(p[1])) === calMonth;
+  });
+  if (calDay) sessions = sessions.filter(s => {
+    const d = s.date.split('.')[2];
+    return d === calDay || String(parseInt(d)) === String(parseInt(calDay));
+  });
   if (!sessions.length) { dc.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">이 달에는 수업 기록이 없어요</div>`; return; }
   dc.innerHTML = sessions.map(s => `
     <div class="date-card" onclick="openSession('${s.id}')">
@@ -1818,11 +1852,12 @@ function renderDayCards(yearMap) {
       <div class="date-info">
         <div class="date-title">${s.label || s.date} ${s.sourceUrl ? '🔗' : '수업'}</div>
         <div class="date-meta">표현 ${s.phrases.length}개</div>
-        <div class="date-chips">${s.topics.map(t => `<span class="chip">${t}</span>`).join('')}</div>
       </div>
       <span class="date-arrow">›</span>
     </div>`).join('');
 }
+
+function renderDayCards(yearMap) { renderCalGrid(yearMap); }
 
 function renderTopicCounts(allPhrases) {
   const ALL_TOPICS = ['일상','육아','업무','예술','디자인·기획','웰니스'];
@@ -1892,7 +1927,7 @@ function renderPhrasePage() {
       <div class="phrase-item-tags">
         <span class="phrase-tag ${tagClass[p.type] || 'tag-vocab'}">${tagLabel[p.type] || p.type}</span>
         ${p.difficulty ? `<span class="phrase-tag ${diffClass}">${p.difficulty}</span>` : ''}
-        <span class="phrase-tag-topic">${p.topic || ''}</span>
+        <span class="phrase-tag-topic">${p.topic_sub || p.topic || ''}</span>
       </div>
       ${p.original ? `<div class="phrase-original">${p.original}</div>` : ''}
       <div class="phrase-en">${p.english}</div>
@@ -1943,7 +1978,7 @@ function startQuizWith(phrases) {
 
 function buildQuizItem(p) {
   // flat 구조 (신규) 또는 nested quiz 구조 (구버전) 모두 지원
-  const answer = p.fill_answer || p.quiz?.fill_answer || p.expression || '';
+  const answer = p.fill_answer || p.expression_quiz || p.quiz?.fill_answer || p.expression || '';
   const sentence = p.fill_sentence || p.quiz?.fill_sentence ||
     (p.english && answer ? p.english.replace(new RegExp(answer.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'), '___') : null) ||
     p.english || '';
@@ -2042,10 +2077,19 @@ function checkHintChoice(btn, chosen) {
   document.querySelectorAll('#choicesList .choice').forEach(b => b.disabled = true);
   const correct = normalizeAns(chosen) === normalizeAns(q.answer);
   btn.className = 'choice ' + (correct ? 'correct' : 'wrong');
-  if (!correct) document.querySelectorAll('#choicesList .choice').forEach(b => { if (normalizeAns(b.textContent.trim()) === normalizeAns(q.answer)) b.className = 'choice reveal'; });
-  recordResult(q.phraseId, false, q.q);
-  if (correct) quizScore += 0.5;
+  if (!correct) document.querySelectorAll('#choicesList .choice').forEach(b => {
+    if (normalizeAns(b.textContent.trim()) === normalizeAns(q.answer)) b.className = 'choice reveal';
+  });
+  // 힌트 사용 시 정답이면 0.5점, 오답이면 0점
+  recordResult(q.phraseId, correct, q.q);
+  if (correct) {
+    quizScore += 0.5;
+    if (q.explain) setTimeout(() => speak(q.explain), 300);
+  }
   document.getElementById('qScoreLive').textContent = `${quizScore}점`;
+  // 확인 버튼 비활성화 (중복 채점 방지)
+  const actionRow = document.querySelector('.quiz-action-row');
+  if (actionRow) actionRow.style.display = 'none';
   showFeedback(correct, q.answer, q.explain);
 }
 
@@ -2055,7 +2099,9 @@ function checkTyping() {
   if (!inp) return;
   const val = inp.value.trim();
   if (!val) return;
-  const correct = normalizeAns(val) === normalizeAns(q.answer) || (normalizeAns(q.answer).includes(normalizeAns(val)) && val.length > 2);
+  const n_val = normalizeAns(val);
+  const n_ans = normalizeAns(q.answer);
+  const correct = n_val === n_ans;
   inp.className = 'quiz-inline-input ' + (correct ? 'correct' : 'wrong');
   inp.disabled = true;
   document.querySelector('.quiz-action-row').style.display = 'none';
@@ -2124,7 +2170,7 @@ function retryQuiz() {
 // ══════════════════════════════════
 // GOOGLE SHEETS — 단일 소스 구조
 // ══════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwS5c2gdg170Vsm-opGZGfy_J82iwFzBhzHUS6W_4ih23u07iQGxyx5Z2DsQx9RnWpD/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxVSypnu2FcUTd1z93HhrkX35Z4SqIbz8uVbZuLakkS8QrX7HYbBhzoBneS0xWDYdcR/exec';
 
 async function sheetsPost(payload) {
   const res = await fetch(SHEETS_URL, {
@@ -2173,6 +2219,7 @@ async function syncToSheets(phrases, date, source) {
         english, expression, korean, difficulty,
         fill_sentence, fill_answer: fill_answer || expression,
         fill_choices: Array.isArray(fill_choices) ? fill_choices : [],
+        expression_quiz: p.expression_quiz || fill_answer || expression,
         date, source: source || 'upload'
       };
     });
