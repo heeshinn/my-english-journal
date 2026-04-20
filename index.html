@@ -481,6 +481,12 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div class="date-cards" id="dateCards"></div>
       </div>
 
+      <!-- 프로필 필터 -->
+      <div class="home-section" style="margin-top:20px;" id="profileFilterSection" style="display:none;">
+        <div class="home-section-title">말투 설정별 표현</div>
+        <div class="cal-month-row" id="profileFilterRow"></div>
+      </div>
+
       <!-- 주제별 토픽 -->
       <div class="home-section" style="margin-top:20px;">
         <div class="home-section-title">주제별 토픽</div>
@@ -1594,6 +1600,12 @@ function getCharacterPrompt() {
   return parts.length ? `\n\n사용자 프로필: ${parts.join(', ')}. 이에 맞는 가장 자연스러운 표현을 우선 추천해줘.` : '';
 }
 
+// 저장용 캐릭터 라벨 — 말투 설정(style1)만 구분자로 사용
+function getCharacterLabel() {
+  const styleMap = { casual:'Casual', business:'Business', formal:'Formal' };
+  return styleMap[character.style1] || '';
+}
+
 function resetLocalData() {
   if (!confirm('로컬 데이터를 초기화할까요?\nSheets 데이터는 유지되고, 앱을 새로고침하면 자동으로 다시 불러와요.')) return;
   localStorage.removeItem('ej_db');
@@ -1722,6 +1734,41 @@ function renderHome() {
   renderTopicCounts(allPhrases);
   renderWrongList(allPhrases);
   renderRecentList(allPhrases);
+  renderProfileFilter(allPhrases);
+}
+
+let activeProfileFilter = null;
+
+function renderProfileFilter(allPhrases) {
+  const section = document.getElementById('profileFilterSection');
+  const row = document.getElementById('profileFilterRow');
+  if (!section || !row) return;
+
+  // character_profile이 있는 표현만 수집
+  const profiles = [...new Set(
+    allPhrases.map(p => p.character_profile).filter(Boolean)
+  )];
+
+  if (profiles.length < 2) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+
+  const all = [{ label: '전체', val: null }, ...profiles.map(p => ({ label: p, val: p }))];
+  row.innerHTML = all.map(({ label, val }) => {
+    const isActive = activeProfileFilter === val;
+    return `<button class="cal-month-btn ${isActive ? 'active' : 'has-data'}" onclick="setProfileFilter(${val ? `'${val}'` : 'null'})">${label}</button>`;
+  }).join('');
+}
+
+function setProfileFilter(val) {
+  activeProfileFilter = val;
+  const allPhrases = db.sessions.flatMap(s => s.phrases);
+  renderProfileFilter(allPhrases);
+  renderTopicCounts(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
+  renderWrongList(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
+  renderRecentList(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
 }
 
 function renderWrongList(allPhrases) {
@@ -2231,6 +2278,7 @@ async function syncToSheets(phrases, date, source) {
         fill_sentence, fill_answer: fill_answer || expression,
         fill_choices: Array.isArray(fill_choices) ? fill_choices : [],
         expression_quiz: p.expression_quiz || fill_answer || expression,
+        character_profile: getCharacterLabel() || '',
         date, source: source || 'upload'
       };
     });
