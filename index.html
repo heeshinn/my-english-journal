@@ -1833,6 +1833,8 @@ function renderCalGrid(yearMap) {
 
 function renderSessionCards() {
   const dc = document.getElementById('dateCards');
+  // 날짜 선택 안 됐으면 카드 숨김
+  if (!calDay) { dc.innerHTML = ''; return; }
   if (!db.sessions.length) {
     dc.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">아직 수업 데이터가 없어요<br>학습 탭에서 수업을 추가해보세요</div>`;
     return;
@@ -1841,11 +1843,11 @@ function renderSessionCards() {
     const p = s.date.split('.');
     return p[0] === calYear && String(parseInt(p[1])) === calMonth;
   });
-  if (calDay) sessions = sessions.filter(s => {
+  sessions = sessions.filter(s => {
     const d = s.date.split('.')[2];
     return d === calDay || String(parseInt(d)) === String(parseInt(calDay));
   });
-  if (!sessions.length) { dc.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">이 달에는 수업 기록이 없어요</div>`; return; }
+  if (!sessions.length) { dc.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">이 날은 수업 기록이 없어요</div>`; return; }
   dc.innerHTML = sessions.map(s => `
     <div class="date-card" onclick="openSession('${s.id}')">
       <div class="date-icon" style="font-size:11px;font-weight:700;">${s.date.split('.').slice(1).join('/')}<br><small style="font-size:10px;opacity:.7;">${s.dayOfWeek || ''}</small></div>
@@ -2101,7 +2103,16 @@ function checkTyping() {
   if (!val) return;
   const n_val = normalizeAns(val);
   const n_ans = normalizeAns(q.answer);
-  const correct = n_val === n_ans;
+  // 정답 판정:
+  // 1) 완전 일치
+  // 2) 입력이 정답을 포함 (capture their attention → capture attention 포함 ✓)
+  // 3) 정답 단어가 모두 입력에 포함 (단, 입력이 정답 단어 수 이상일 때만)
+  const ansWords = n_ans.split(/\s+/);
+  const valWords = n_val.split(/\s+/);
+  const allAnsWordsInVal = ansWords.every(w => valWords.includes(w));
+  const correct = n_val === n_ans
+    || n_val.includes(n_ans)                          // val이 answer 전체를 포함
+    || (allAnsWordsInVal && valWords.length >= ansWords.length); // answer의 모든 단어가 val에 있고, 단어 수도 충분
   inp.className = 'quiz-inline-input ' + (correct ? 'correct' : 'wrong');
   inp.disabled = true;
   document.querySelector('.quiz-action-row').style.display = 'none';
