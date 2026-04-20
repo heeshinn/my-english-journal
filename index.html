@@ -27,7 +27,7 @@
   --gold: #F59E0B;
   --gold-light: #FFFBEB;
   --tab-home: #7C3AED; --tab-home-l: #F5F3FF; --tab-home-rgb: 124,58,237;
-  --tab-learn: #3B82F6; --tab-learn-l: #EFF6FF; --tab-learn-rgb: 59,130,246;
+  --tab-learn: #0EA5E9; --tab-learn-l: #F0F9FF; --tab-learn-rgb: 14,165,233;
   --tab-char: #10B981; --tab-char-l: #ECFDF5; --tab-char-rgb: 16,185,129;
   --r: 16px; --rs: 10px; --side: 20px;
   --shadow: 0 2px 12px rgba(0,0,0,.06);
@@ -55,10 +55,28 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .screen.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 #homeScreen { padding: 0 0 80px; }
+.dash-section { background: var(--bg); border-radius: 20px; border: 1px solid var(--border); padding: 20px 18px; margin-bottom: 20px; }
+.dash-sec-label { font-size: 12px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; transition: color .3s; }
+.dash-sec-num { font-size: 28px; font-weight: 800; color: var(--ink); line-height: 1.1; margin-bottom: 14px; }
+.dash-sec-num span { font-size: 14px; font-weight: 500; color: var(--ink2); }
+.week-strip { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin-bottom: 16px; }
+.wday-cell { display: flex; flex-direction: column; align-items: center; }
+.wday-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; border: 1.5px solid transparent; border-radius: 24px; padding: 4px 2px; width: 100%; }
+.wday-wrap.today-cell { border-color: var(--ink); }
+.wday-name { font-size: 10px; font-weight: 600; color: var(--muted); }
+.wday-name.today-name { color: var(--ink); }
+.wday-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--ink2); }
+.wday-num.studied { background: var(--accent); color: white; }
+.wday-num.today-num { color: var(--ink); font-weight: 800; }
+.dash-ring-row { display: flex; align-items: center; gap: 16px; }
+.review-ring-card { flex: 1; background: var(--surface); border-radius: 14px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; }
+.review-ring-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+.review-ring-value { font-size: 13px; font-weight: 700; color: var(--ink); margin-top: 6px; }
+.review-ring-sub { font-size: 11px; color: var(--ink2); margin-top: 2px; }
 .home-hero { background: var(--bg); padding: 28px var(--side) 20px; border-bottom: 1px solid var(--border); }
 .home-hero h2 { font-family: "DM Sans", sans-serif; font-size: 32px; font-weight: 800; line-height: 1.15; margin-bottom: 6px; letter-spacing: -.5px; color: var(--accent); transition: color .3s; }
 .home-hero-sub { display: flex; flex-direction: column; gap: 3px; }
-.hero-en { font-size: 13px; color: var(--muted); font-style: italic; }
+.hero-en { font-size: 13px; color: var(--muted); }
 .hero-ko { font-size: 12px; color: var(--muted); font-weight: 400; }
 .home-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px var(--side) 24px; }
 .stat-box { background: var(--surface); padding: 18px 12px 16px; border-radius: var(--r); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid var(--border); }
@@ -71,9 +89,9 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .home-body { display: flex; flex-direction: column; max-width: 680px; margin: 0 auto; }
 .home-left { min-width: 0; }
 .home-right { display: flex; flex-direction: column; gap: 14px; padding: 0 var(--side); margin-top: 24px; }
-.home-section { padding: 0 var(--side); margin-bottom: 28px; }
+.home-section { padding: 0; margin-bottom: 28px; }
 .home-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; transition: color .3s; }
-.quick-quiz-wrap { padding: 0 var(--side); margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+.quick-quiz-wrap { padding: 0; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
 .quick-quiz-btn { width: 100%; padding: 18px 20px; background: var(--accent); color: white; border: none; border-radius: var(--r); font-size: 16px; font-weight: 700; cursor: pointer; font-family: "DM Sans", sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 20px rgba(var(--accent-rgb),.3); transition: transform .1s; }
 .quick-quiz-btn:active { transform: scale(.98); }
 .quick-quiz-btn.secondary { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); border: 1.5px solid var(--border); }
@@ -94,10 +112,10 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .topic-btn-ko { font-size: 10px; color: var(--muted); font-weight: 400; line-height: 1.4; margin-top: 2px; }
 .topic-btn-count { position: absolute; top: 10px; right: 10px; font-size: 10px; background: var(--surface); color: var(--muted); padding: 2px 7px; border-radius: 10px; font-weight: 600; }
 .topic-btn-count.has-data { background: var(--accent-light); color: var(--accent); transition: background .3s, color .3s; }
-.home-action-btns { padding: 0 var(--side); display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.home-action-btns { padding: 0; display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
 .random-btn { width: 100%; padding: 15px; background: var(--surface); color: var(--ink); border: 1.5px solid var(--border); border-radius: var(--r); font-size: 14px; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .15s; }
 .random-btn:hover { border-color: var(--accent); color: var(--accent); }
-.random-btn.blue-btn { color: #7C3AED; border-color: #DDD6FE; background: #F5F3FF; }
+.random-btn.blue-btn { color: #0EA5E9; border-color: #BAE6FD; background: #F0F9FF; }
 .cal-year-row { display: flex; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
 .cal-year-btn { padding: 7px 18px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; font-family: "DM Sans", sans-serif; color: var(--ink2); transition: all .12s; }
 .cal-year-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -367,16 +385,16 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 <!-- Bottom Tab Bar -->
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-home" onclick="switchTab('home')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
     <span>홈</span>
   </button>
-  <button class="tab-btn" id="tab-learn" onclick="switchTab('learn')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-    <span>학습</span>
+  <button class="tab-btn" id="tab-review" onclick="switchTab('review')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <span>리뷰</span>
   </button>
-  <button class="tab-btn" id="tab-character" onclick="switchTab('character')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>내 설정</span>
+  <button class="tab-btn" id="tab-input" onclick="switchTab('input')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm1 13h-2v-5h2v5zm0-7h-2V7h2v2z"/></svg>
+    <span>학습</span>
   </button>
 </div>
 
@@ -409,164 +427,70 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
       <span class="hero-ko">과정 자체를 즐기는 영어 복습</span>
     </p>
   </div>
+  <div style="padding: 20px var(--side) 50px;">
 
-  <div class="home-stats">
-    <div class="stat-box">
-      <svg class="stat-svg" viewBox="0 0 56 44" fill="none">
-        <rect x="6" y="28" width="44" height="8" rx="2" fill="#DDD6FE"/>
-        <rect x="10" y="20" width="36" height="8" rx="2" fill="#A78BFA"/>
-        <rect x="14" y="12" width="28" height="8" rx="2" fill="#7C3AED"/>
-        <rect x="22" y="7" width="12" height="5" rx="1" fill="#5B21B6"/>
-      </svg>
-      <span class="stat-num" id="statPhrases">0</span>
-      <span class="stat-label">누적 표현</span>
+    <!-- 인트로 인사 박스 -->
+    <div style="background:var(--accent);border-radius:16px;padding:20px 22px;margin-bottom:20px;margin-top:20px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.38;margin-bottom:0;">희선님</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.38;">오늘도 반가워요!</div>
     </div>
-    <div class="stat-box">
-      <svg class="stat-svg" viewBox="0 0 56 44" fill="none">
-        <rect x="8" y="10" width="40" height="30" rx="3" stroke="#7C3AED" stroke-width="1.5" fill="#F5F3FF"/>
-        <rect x="8" y="10" width="40" height="9" rx="3" fill="#7C3AED"/>
-        <rect x="8" y="16" width="40" height="3" fill="#7C3AED"/>
-        <circle cx="18" cy="27" r="2.5" fill="#7C3AED"/>
-        <circle cx="28" cy="27" r="2.5" fill="#7C3AED"/>
-        <circle cx="38" cy="27" r="2.5" fill="#DDD6FE"/>
-        <circle cx="18" cy="35" r="2.5" fill="#DDD6FE"/>
-        <circle cx="28" cy="35" r="2.5" fill="#DDD6FE"/>
-      </svg>
-      <span class="stat-num" id="statSessions">0</span>
-      <span class="stat-label">수업 횟수</span>
-    </div>
-    <div class="stat-box">
-      <svg class="stat-svg" viewBox="0 0 56 44" fill="none">
-        <line x1="10" y1="36" x2="48" y2="36" stroke="#E4E4E7" stroke-width="1.5"/>
-        <rect x="12" y="22" width="8" height="14" rx="2" fill="#DDD6FE"/>
-        <rect x="24" y="16" width="8" height="20" rx="2" fill="#A78BFA"/>
-        <rect x="36" y="10" width="8" height="26" rx="2" fill="#7C3AED"/>
-        <circle cx="44" cy="8" r="4" fill="#7C3AED"/>
-        <path d="M42 8l1.5 1.5L46 6" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div class="stat-quiz-score">
-        <span class="stat-num" id="statQuizzesCorrect">0</span>
-        <span class="stat-quiz-sep">/</span>
-        <span class="stat-quiz-total" id="statQuizzesTotal">0</span>
+
+    <!-- 섹션1: 누적 학습일수 -->
+    <div class="dash-section">
+      <div class="dash-sec-label">누적 학습일수</div>
+      <div class="dash-sec-num" id="dashDays">0<span>일</span></div>
+      <div class="week-strip" id="weekStrip"></div>
+      <svg id="daysRing" viewBox="0 0 280 230" width="100%" style="display:block;margin:0 auto;"></svg>
+      <!-- 학습 유형 인덱스 -->
+      <div style="display:flex;justify-content:center;gap:20px;margin-top:16px;padding-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#7C3AED;flex-shrink:0;"></div>
+          <span style="font-size:11px;color:var(--ink2);">튜터수업</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#A78BFA;flex-shrink:0;"></div>
+          <span style="font-size:11px;color:var(--ink2);">AI학습</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#DDD6FE;flex-shrink:0;"></div>
+          <span style="font-size:11px;color:var(--ink2);">컨텐츠</span>
+        </div>
       </div>
-      <span class="stat-label">퀴즈 정답</span>
     </div>
+
+    <!-- 섹션2.5: 누적 표현 수 (레이더) -->
+    <div class="dash-section">
+      <div class="dash-sec-label">누적 표현 수</div>
+      <div class="dash-sec-num" id="dashPhrases">0<span>개</span></div>
+      <svg id="radarChart" viewBox="0 0 280 240" width="100%" style="display:block;margin:0 auto;margin-bottom:69px;"></svg>
+    </div>
+
+    <!-- 섹션3: 리뷰 -->
+    <div class="dash-section">
+      <div class="dash-sec-label">리뷰 달성 수</div>
+      <div class="dash-sec-num" id="dashReviewed">0<span>개 복습</span></div>
+      <div style="display:flex;gap:12px;margin-top:8px;">
+
+        <!-- Expression Quiz 카드 -->
+        <div style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 12px 16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;align-self:flex-start;">Expression Quiz</div>
+          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:2px;align-self:flex-start;" id="quizPct">0%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">정답 <span id="quizCorrect">0</span> / <span id="quizTotal">0</span></div>
+          <svg id="quizDonut" viewBox="0 0 120 130" width="100%" style="display:block;flex-shrink:0;"></svg>
+        </div>
+
+        <!-- Flash Cards 카드 -->
+        <div style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 12px 16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;">
+          <div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;align-self:flex-start;">Flash Cards</div>
+          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:2px;align-self:flex-start;" id="flashPct">0%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">알고있음 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
+          <svg id="flashDonut" viewBox="0 0 120 130" width="100%" style="display:block;flex-shrink:0;"></svg>
+        </div>
+
+      </div>
+    </div>
+
   </div>
-
-  <div class="home-body">
-    <div class="home-left">
-
-      <!-- 퀴즈 + 플래시카드 버튼 -->
-      <div class="quick-quiz-wrap">
-        <button class="quick-quiz-btn" onclick="startSmartQuiz()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-          Expression Quiz
-        </button>
-        <button class="quick-quiz-btn secondary" onclick="startFlashCards()" style="margin-top:0;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
-          </svg>
-          Flash Cards
-        </button>
-      </div>
-
-      <!-- 날짜별 수업 -->
-      <div class="home-section">
-        <div class="home-section-title">날짜별 수업</div>
-        <div class="cal-year-row" id="calYearRow"></div>
-        <div class="cal-month-row" id="calMonthRow"></div>
-        <div class="cal-grid-wrap" id="calGridWrap"></div>
-        <div class="date-cards" id="dateCards"></div>
-      </div>
-
-      <!-- 프로필 필터 -->
-      <div class="home-section" style="margin-top:20px;" id="profileFilterSection" style="display:none;">
-        <div class="home-section-title">말투 설정별 표현</div>
-        <div class="cal-month-row" id="profileFilterRow"></div>
-      </div>
-
-      <!-- 주제별 토픽 -->
-      <div class="home-section" style="margin-top:20px;">
-        <div class="home-section-title">주제별 토픽</div>
-        <div class="topic-grid-fixed">
-          <div class="topic-btn" onclick="openTopic('일상')">
-            <span class="topic-btn-en">일상</span>
-            <span class="topic-btn-ko">루틴 · 생활 · 잡담</span>
-            <span class="topic-btn-count" id="cnt-일상">0</span>
-          </div>
-          <div class="topic-btn" onclick="openTopic('육아')">
-            <span class="topic-btn-en">육아</span>
-            <span class="topic-btn-ko">아이 · 교육 · 가정</span>
-            <span class="topic-btn-count" id="cnt-육아">0</span>
-          </div>
-          <div class="topic-btn" onclick="openTopic('업무')">
-            <span class="topic-btn-en">업무</span>
-            <span class="topic-btn-ko">미팅 · 커리어 · 비즈니스</span>
-            <span class="topic-btn-count" id="cnt-업무">0</span>
-          </div>
-          <div class="topic-btn" onclick="openTopic('예술')">
-            <span class="topic-btn-en">예술</span>
-            <span class="topic-btn-ko">음악 · 미술 · 공연</span>
-            <span class="topic-btn-count" id="cnt-예술">0</span>
-          </div>
-          <div class="topic-btn" onclick="openTopic('디자인·기획')">
-            <span class="topic-btn-en">디자인·기획</span>
-            <span class="topic-btn-ko">건축 · 공간 · 프로젝트</span>
-            <span class="topic-btn-count" id="cnt-디자인·기획">0</span>
-          </div>
-          <div class="topic-btn" onclick="openTopic('웰니스')">
-            <span class="topic-btn-en">웰니스</span>
-            <span class="topic-btn-ko">건강 · 운동 · 멘탈</span>
-            <span class="topic-btn-count" id="cnt-웰니스">0</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 하단 버튼들 -->
-      <div class="home-action-btns">
-        <button class="random-btn" onclick="startRandom()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-          전체 랜덤 복습
-        </button>
-        <button class="random-btn blue-btn" onclick="refreshFromSheets()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-          데이터 새로고침
-        </button>
-      </div>
-    </div>
-
-    <!-- RIGHT PANELS -->
-    <div class="home-right">
-      <div class="side-panel">
-        <div class="side-panel-title">
-          <span class="side-panel-dot" style="background:#7C3AED;"></span>
-          자주 틀리는 문장
-        </div>
-        <div id="wrongList" class="side-list">
-          <div class="side-empty">퀴즈를 풀면<br>여기에 쌓여요</div>
-        </div>
-        <button class="side-quiz-btn" onclick="startWrongQuiz()">틀린 문장만 복습 →</button>
-      </div>
-
-      <div class="side-panel">
-        <div class="side-panel-title">
-          <span class="side-panel-dot" style="background:#A78BFA;"></span>
-          리뷰한 문장 다시보기
-        </div>
-        <div id="recentList" class="side-list">
-          <div class="side-empty">복습한 표현이<br>여기에 표시돼요</div>
-        </div>
-        <button class="side-quiz-btn" onclick="startRecentQuiz()">최근 표현 퀴즈 →</button>
-      </div>
-
-      <button onclick="resetLocalData()" style="width:100%;padding:12px;background:none;border:1.5px solid var(--border);border-radius:var(--rs);font-size:12px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;">
-        🗑 로컬 데이터 초기화
-      </button>
-    </div>
-  </div>
-  <div style="height:40px;"></div>
 </div>
 
 <!-- ══ PHRASES ══ -->
@@ -592,49 +516,134 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 </div>
 
 <!-- ══ LEARN ══ -->
-<div class="screen" id="learnScreen">
+<!-- ══ REVIEW ══ -->
+<div class="screen" id="reviewScreen">
+  <div class="char-hero">
+    <h3>리뷰하기</h3>
+    <p>날짜별 주제별 표현을 복습해요</p>
+  </div>
+  <div style="padding: 20px var(--side) 100px;">
+
+    <!-- 캐릭터 필터 -->
+    <div id="profileFilterSection" style="display:none;margin-bottom:20px;">
+      <div class="home-section-title">말투 설정별</div>
+      <div class="cal-month-row" id="profileFilterRow"></div>
+    </div>
+
+    <!-- 퀴즈 + 플래시카드 버튼 -->
+    <div class="quick-quiz-wrap" style="margin-bottom:24px;">
+      <button class="quick-quiz-btn" onclick="startSmartQuiz()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Expression Quiz
+      </button>
+      <button class="quick-quiz-btn secondary" onclick="startFlashCards()" style="margin-top:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Flash Cards
+      </button>
+    </div>
+
+    <!-- 날짜별 표현 복습 -->
+    <div class="home-section">
+      <div class="home-section-title">날짜별 수업</div>
+      <div class="cal-year-row" id="calYearRow"></div>
+      <div class="cal-month-row" id="calMonthRow"></div>
+      <div class="cal-grid-wrap" id="calGridWrap"></div>
+      <div class="date-cards" id="dateCards"></div>
+    </div>
+
+    <!-- 주제별 토픽 -->
+    <div class="home-section" style="margin-top:24px;">
+      <div class="home-section-title">주제별 토픽</div>
+      <div class="topic-grid-fixed">
+        <div class="topic-btn" onclick="openTopic('일상')"><span class="topic-btn-en">일상</span><span class="topic-btn-ko">여가 / 생활 / 루틴</span><span class="topic-btn-count" id="cnt-일상">0</span></div>
+        <div class="topic-btn" onclick="openTopic('육아')"><span class="topic-btn-en">육아</span><span class="topic-btn-ko">발달 / 놀이 / 교육</span><span class="topic-btn-count" id="cnt-육아">0</span></div>
+        <div class="topic-btn" onclick="openTopic('업무')"><span class="topic-btn-en">업무</span><span class="topic-btn-ko">직무 / 회사 / 동료</span><span class="topic-btn-count" id="cnt-업무">0</span></div>
+        <div class="topic-btn" onclick="openTopic('예술')"><span class="topic-btn-en">예술</span><span class="topic-btn-ko">음악 / 미술 / 공연</span><span class="topic-btn-count" id="cnt-예술">0</span></div>
+        <div class="topic-btn" onclick="openTopic('디자인·기획')"><span class="topic-btn-en">디자인</span><span class="topic-btn-ko">건축 / 공간 / 브랜딩</span><span class="topic-btn-count" id="cnt-디자인·기획">0</span></div>
+        <div class="topic-btn" onclick="openTopic('웰니스')"><span class="topic-btn-en">웰니스</span><span class="topic-btn-ko">운동 / 관계 / 마인드</span><span class="topic-btn-count" id="cnt-웰니스">0</span></div>
+      </div>
+    </div>
+
+    <!-- 자주 틀리는 문장 -->
+    <div class="home-section" style="margin-top:24px;">
+      <div class="side-panel">
+        <div class="side-panel-title"><span class="side-panel-dot" style="background:#0EA5E9;"></span>자주 틀리는 문장</div>
+        <div id="wrongList" class="side-list"><div class="side-empty">퀴즈를 풀면<br>여기에 쌓여요</div></div>
+        <button class="side-quiz-btn" onclick="startWrongQuiz()">틀린 문장만 복습 →</button>
+      </div>
+    </div>
+
+    <!-- 리뷰한 문장 -->
+    <div class="home-section" style="margin-top:16px;">
+      <div class="side-panel">
+        <div class="side-panel-title"><span class="side-panel-dot" style="background:#38BDF8;"></span>리뷰한 문장 다시보기</div>
+        <div id="recentList" class="side-list"><div class="side-empty">복습한 표현이<br>여기에 표시돼요</div></div>
+        <button class="side-quiz-btn" onclick="startRecentQuiz()">최근 표현 퀴즈 →</button>
+      </div>
+    </div>
+
+    <!-- 하단 버튼 -->
+    <div class="home-action-btns" style="margin-top:16px;">
+      <button class="random-btn" onclick="startRandom()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        전체 랜덤 복습
+      </button>
+      <button class="random-btn blue-btn" onclick="refreshFromSheets()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        데이터 새로고침
+      </button>
+      <button onclick="resetLocalData()" style="width:100%;padding:12px;background:none;border:1.5px solid var(--border);border-radius:var(--rs);font-size:12px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;">
+        🗑 로컬 데이터 초기화
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INPUT ══ -->
+<div class="screen" id="inputScreen">
+
   <div class="char-hero">
     <h3>학습하기</h3>
-    <p>공부 방식을 선택해요</p>
+    <p>다양한 표현을 쌓아요</p>
   </div>
   <div class="learn-body">
     <div class="learn-mode-cards">
-      <div class="learn-mode-card" onclick="showLearnMode('upload')">
+      <div class="learn-mode-card" onclick="showInputMode('upload')">
         <div class="learn-mode-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/>
           </svg>
         </div>
         <div class="learn-mode-title">내 회화수업 업로드</div>
         <div class="learn-mode-desc">튜터와의 수업 녹취 파일(txt)을 올리면<br>표현을 자동으로 추출해드려요</div>
-        <div class="learn-mode-arrow" style="color:#3B82F6;">→</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
       </div>
-      <div class="learn-mode-card" onclick="showLearnMode('chat')">
+      <div class="learn-mode-card" onclick="showInputMode('chat')">
         <div class="learn-mode-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
           </svg>
         </div>
         <div class="learn-mode-title">AI 튜터와 대화하기</div>
         <div class="learn-mode-desc">Claude와 영어로 자유롭게 대화하고<br>대화 내용을 복습 리스트에 저장해요</div>
-        <div class="learn-mode-arrow" style="color:#3B82F6;">→</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
       </div>
-      <div class="learn-mode-card" onclick="showLearnMode('link')">
+      <div class="learn-mode-card" onclick="showInputMode('link')">
         <div class="learn-mode-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
         </div>
         <div class="learn-mode-title">관심 주제 컨텐츠 분석</div>
         <div class="learn-mode-desc">YouTube·아티클·Reddit 링크를 붙여넣으면<br>핵심 표현과 예시 문장을 추출해드려요</div>
-        <div class="learn-mode-arrow" style="color:#3B82F6;">→</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
       </div>
     </div>
 
     <!-- 업로드 패널 -->
     <div class="learn-panel" id="uploadPanel">
       <div class="learn-panel-header">
-        <button class="learn-back-btn" onclick="hideLearnMode()">← 뒤로</button>
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
         <span>회화수업 업로드</span>
       </div>
       <div class="learn-panel-body">
@@ -667,7 +676,173 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
     <!-- AI 튜터 채팅 패널 -->
     <div class="learn-panel" id="chatPanel">
       <div class="learn-panel-header">
-        <button class="learn-back-btn" onclick="hideLearnMode()">← 뒤로</button>
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
+        <span>AI 튜터와 대화</span>
+        <button class="chat-save-btn" onclick="saveChatToReview()">복습에 저장</button>
+      </div>
+      <!-- 내 설정 접이식 -->
+      <div style="padding:8px 16px 0;">
+        <button onclick="toggleCharPanel()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);font-family:'DM Sans',sans-serif;">
+          <span id="charPanelLabel">내 설정 보기</span>
+          <span id="charToggleArrow" style="font-size:10px;transition:transform .2s;">▼</span>
+        </button>
+        <div id="charPanelBody" style="display:none;padding:14px;border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);background:var(--bg);font-size:13px;"></div>
+      </div>
+      <!-- [FIX 4] 음성 입력 바 -->
+      <div class="voice-status-bar" id="voiceBar">
+        <button class="voice-btn idle" id="voiceBtn" onclick="toggleVoiceInput()" title="마이크로 말하기">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+            <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <span class="voice-transcript" id="voiceTranscript">마이크 버튼을 눌러 말하면 자동으로 입력돼요</span>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble ai">
+          <div class="chat-text">Hi! I'm your English tutor. 오늘 어떤 주제로 대화할까요? 편하게 영어나 한국어로 말해도 돼요 😊</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="영어로 말해보세요..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button class="chat-send-btn" onclick="sendChat()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- [FIX 5] 컨텐츠 링크 패널 -->
+    <div class="learn-panel" id="linkPanel">
+      <div class="learn-panel-header">
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
+        <span>관심 주제 컨텐츠 분석</span>
+      </div>
+      <div class="learn-panel-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+          분석하고 싶은 영어 컨텐츠의 URL을 붙여넣으세요.<br>
+          <span style="font-size:11px;">YouTube · 아티클 · Reddit · 뉴스레터 등</span>
+        </div>
+
+        <div class="link-input-row">
+          <input class="link-input" id="linkInput" type="url" placeholder="https://..." oninput="checkLinkInput()"/>
+          <button class="link-fetch-btn" id="linkFetchBtn" onclick="fetchAndExtract()" disabled>분석</button>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">컨텐츠 유형</div>
+          <div class="link-type-chips">
+            <button class="link-type-chip selected" data-linktype="article" onclick="selectLinkType(this)">📰 아티클</button>
+            <button class="link-type-chip" data-linktype="youtube" onclick="selectLinkType(this)">▶️ YouTube</button>
+            <button class="link-type-chip" data-linktype="social" onclick="selectLinkType(this)">💬 SNS/Reddit</button>
+            <button class="link-type-chip" data-linktype="other" onclick="selectLinkType(this)">🔖 기타</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="char-label">주제 (선택)</label>
+          <div class="char-chips-row" style="margin-top:4px;">
+            <button class="char-chip" data-group="linktopic" data-val="일상" onclick="selectChip(this)">일상</button>
+            <button class="char-chip" data-group="linktopic" data-val="육아" onclick="selectChip(this)">육아</button>
+            <button class="char-chip" data-group="linktopic" data-val="업무" onclick="selectChip(this)">업무</button>
+            <button class="char-chip" data-group="linktopic" data-val="예술" onclick="selectChip(this)">예술</button>
+            <button class="char-chip" data-group="linktopic" data-val="디자인·기획" onclick="selectChip(this)">디자인·기획</button>
+            <button class="char-chip" data-group="linktopic" data-val="웰니스" onclick="selectChip(this)">웰니스</button>
+          </div>
+        </div>
+
+        <!-- 미리보기 + 예시 문장 -->
+        <div class="link-preview" id="linkPreview"></div>
+
+        <button class="char-save-btn" id="linkSaveBtn" style="display:none;" onclick="saveLinkPhrases()">
+          표현 저장하고 퀴즈 연동하기
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="screen" id="learnScreen">
+  <div class="char-hero">
+    <h3>학습하기</h3>
+    <p>다양한 표현을 쌓아요</p>
+  </div>
+  <div class="learn-body">
+    <div class="learn-mode-cards">
+      <div class="learn-mode-card" onclick="showInputMode('upload')">
+        <div class="learn-mode-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/>
+          </svg>
+        </div>
+        <div class="learn-mode-title">내 회화수업 업로드</div>
+        <div class="learn-mode-desc">튜터와의 수업 녹취 파일(txt)을 올리면<br>표현을 자동으로 추출해드려요</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
+      </div>
+      <div class="learn-mode-card" onclick="showInputMode('chat')">
+        <div class="learn-mode-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <div class="learn-mode-title">AI 튜터와 대화하기</div>
+        <div class="learn-mode-desc">Claude와 영어로 자유롭게 대화하고<br>대화 내용을 복습 리스트에 저장해요</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
+      </div>
+      <div class="learn-mode-card" onclick="showInputMode('link')">
+        <div class="learn-mode-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div class="learn-mode-title">관심 주제 컨텐츠 분석</div>
+        <div class="learn-mode-desc">YouTube·아티클·Reddit 링크를 붙여넣으면<br>핵심 표현과 예시 문장을 추출해드려요</div>
+        <div class="learn-mode-arrow" style="color:#10B981;">→</div>
+      </div>
+    </div>
+
+    <!-- 업로드 패널 -->
+    <div class="learn-panel" id="uploadPanel">
+      <div class="learn-panel-header">
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
+        <span>회화수업 업로드</span>
+      </div>
+      <div class="learn-panel-body">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">txt 파일을 탭해서 선택</div>
+          <div class="upload-sub">수업 녹취 텍스트 파일 (.txt)</div>
+          <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="handleFileUpload(this)"/>
+        </div>
+        <div class="upload-info" id="uploadInfo"></div>
+        <div class="upload-field">
+          <label class="char-label">수업 날짜</label>
+          <input class="char-input" type="date" id="uploadDate"/>
+        </div>
+        <div class="upload-field">
+          <label class="char-label">주요 주제</label>
+          <div class="char-chips-row" style="margin-top:4px;">
+            <button class="char-chip" data-group="uptopic" data-val="일상" onclick="selectChip(this)">일상</button>
+            <button class="char-chip" data-group="uptopic" data-val="육아" onclick="selectChip(this)">육아</button>
+            <button class="char-chip" data-group="uptopic" data-val="업무" onclick="selectChip(this)">업무</button>
+            <button class="char-chip" data-group="uptopic" data-val="예술" onclick="selectChip(this)">예술</button>
+            <button class="char-chip" data-group="uptopic" data-val="디자인·기획" onclick="selectChip(this)">디자인·기획</button>
+            <button class="char-chip" data-group="uptopic" data-val="웰니스" onclick="selectChip(this)">웰니스</button>
+          </div>
+        </div>
+        <button class="char-save-btn" id="uploadBtn" onclick="processUpload()" disabled>분석 시작하기</button>
+      </div>
+    </div>
+
+    <!-- AI 튜터 채팅 패널 -->
+    <div class="learn-panel" id="chatPanel">
+      <div class="learn-panel-header">
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
         <span>AI 튜터와 대화</span>
         <button class="chat-save-btn" onclick="saveChatToReview()">복습에 저장</button>
       </div>
@@ -701,7 +876,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
     <!-- [FIX 5] 컨텐츠 링크 패널 -->
     <div class="learn-panel" id="linkPanel">
       <div class="learn-panel-header">
-        <button class="learn-back-btn" onclick="hideLearnMode()">← 뒤로</button>
+        <button class="learn-back-btn" onclick="hideInputMode()">← 뒤로</button>
         <span>관심 주제 컨텐츠 분석</span>
       </div>
       <div class="learn-panel-body">
@@ -956,7 +1131,7 @@ function saveApiKey() {
 // ══════════════════════════════════
 // ── 화면 히스토리 스택 (뒤로가기) ──
 const screenHistory = [];
-const TAB_SCREENS = ['homeScreen', 'learnScreen', 'characterScreen'];
+const TAB_SCREENS = ['homeScreen', 'reviewScreen', 'inputScreen'];
 
 function showScreen(id) {
   const current = document.querySelector('.screen.active')?.id;
@@ -985,8 +1160,8 @@ function goBack() {
   document.getElementById(prev)?.classList.add('active');
   window.scrollTo(0, 0);
   if (prev === 'homeScreen') { setAccent('home'); renderHome(); }
-  else if (prev === 'learnScreen') setAccent('learn');
-  else if (prev === 'characterScreen') setAccent('character');
+  else if (prev === 'reviewScreen') setAccent('review');
+  else if (prev === 'inputScreen') setAccent('input');
   updateBackBtn();
 }
 
@@ -1019,7 +1194,7 @@ function startSmartQuiz() {
 let uploadedText = '';
 let chatHistory = [];
 
-function showLearnMode(mode) {
+function showInputMode(mode) {
   document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'none');
   document.getElementById('uploadPanel').classList.remove('show');
   document.getElementById('chatPanel').classList.remove('show');
@@ -1044,7 +1219,7 @@ function showLearnMode(mode) {
   }
 }
 
-function hideLearnMode() {
+function hideInputMode() {
   document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'flex');
   document.getElementById('uploadPanel').classList.remove('show');
   document.getElementById('chatPanel').classList.remove('show');
@@ -1567,8 +1742,11 @@ function updateCharPreview() {
   if (style1) parts.push(styleMap[style1]);
   if (style2Vals.length) parts.push(style2Vals.map(v => toneMap[v]).join('+'));
   if (goal) parts.push(`목표: ${goalMap[goal]}`);
+  const previewText = parts.length ? `${parts.join(' · ')} 기준으로 가장 자연스러운 표현을 추천해드려요.` : '설정을 입력하면 교정에 이렇게 반영돼요';
   const el = document.getElementById('charPreview');
-  el.textContent = parts.length ? `${parts.join(' · ')} 기준으로 가장 자연스러운 표현을 추천해드려요.` : '설정을 입력하면 교정에 이렇게 반영돼요';
+  if (el) el.textContent = previewText;
+  const el2 = document.getElementById('charPreviewChat');
+  if (el2) el2.textContent = previewText;
 }
 
 function saveCharacter() {
@@ -1617,16 +1795,14 @@ function resetLocalData() {
 function setAccent(tab) {
   const root = document.documentElement;
   const map = {
-    home:      { color: 'var(--tab-home)',  light: 'var(--tab-home-l)',  rgb: 'var(--tab-home-rgb)' },
-    learn:     { color: 'var(--tab-learn)', light: 'var(--tab-learn-l)', rgb: 'var(--tab-learn-rgb)' },
-    character: { color: 'var(--tab-char)',  light: 'var(--tab-char-l)',  rgb: 'var(--tab-char-rgb)' },
+    home:   { color: 'var(--tab-home)',  light: 'var(--tab-home-l)',  rgb: 'var(--tab-home-rgb)' },
+    review: { color: 'var(--tab-learn)', light: 'var(--tab-learn-l)', rgb: 'var(--tab-learn-rgb)' },
+    input:  { color: 'var(--tab-char)',  light: 'var(--tab-char-l)',  rgb: 'var(--tab-char-rgb)' },
   };
   const t = map[tab] || map.home;
   root.style.setProperty('--accent', t.color);
   root.style.setProperty('--accent-light', t.light);
   root.style.setProperty('--accent-rgb', t.rgb);
-
-  // 홈에서는 nav 로고 텍스트 숨김 (홈 히어로에 이미 제목 있으니까)
   const logoText = document.getElementById('navLogoText');
   if (logoText) logoText.style.opacity = tab === 'home' ? '0' : '1';
 }
@@ -1635,14 +1811,21 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   setAccent(tab);
-  screenHistory.length = 0; // 탭 전환 시 히스토리 초기화
+  screenHistory.length = 0;
   if (tab === 'home') { showScreen('homeScreen'); renderHome(); }
-  else if (tab === 'learn') {
-    showScreen('learnScreen');
-    document.querySelectorAll('.learn-mode-cards').forEach(el => el.style.display = 'flex');
-    ['uploadPanel','chatPanel','linkPanel'].forEach(id => document.getElementById(id).classList.remove('show'));
+  else if (tab === 'review') {
+    showScreen('reviewScreen');
+    renderCalendar();
+    const allPhrases = db.sessions.flatMap(s => s.phrases);
+    renderTopicCounts(allPhrases);
+    renderWrongList(allPhrases);
+    renderRecentList(allPhrases);
+    renderProfileFilter(allPhrases);
   }
-  else if (tab === 'character') { showScreen('characterScreen'); requestAnimationFrame(() => applyCharacterUI()); }
+  else if (tab === 'input') {
+    showScreen('inputScreen');
+    renderInputScreen();
+  }
 }
 
 // ══════════════════════════════════
@@ -1724,17 +1907,281 @@ let calYear = null, calMonth = null, calDay = null;
 
 function renderHome() {
   const allPhrases = db.sessions.flatMap(s => s.phrases);
-  document.getElementById('statPhrases').textContent = allPhrases.length;
-  document.getElementById('statSessions').textContent = db.sessions.length;
-  const correct = db.stats.totalCorrect || 0;
+  renderDashboard(allPhrases);
+}
+
+function renderDashboard(allPhrases) {
+  // ── 섹션1: 표현별 문장 + 레이더 차트 ──
+  const el = document.getElementById('dashPhrases');
+  if (el) el.innerHTML = allPhrases.length + '<span>개</span>';
+  renderRadarChart(allPhrases);
+
+  // ── 섹션2: 누적 학습일수 + 위클리 스트립 + 링 ──
+  const today = new Date();
+  const todayY = String(today.getFullYear());
+  const todayM = String(today.getMonth() + 1).padStart(2, '0');
+  const todayD = String(today.getDate()).padStart(2, '0');
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+  // 이번 달 수업 날짜 세트
+  const studiedDates = new Set();
+  db.sessions.forEach(s => {
+    const p = s.date.split('.');
+    if (p[0] === todayY && p[1] === todayM.replace(/^0/,'')) {
+      studiedDates.add(String(parseInt(p[2])));
+    }
+  });
+
+  const totalDays = studiedDates.size;
+  const elDays = document.getElementById('dashDays');
+  if (elDays) elDays.innerHTML = totalDays + '<span>일</span>';
+
+  const pct = Math.round(totalDays / daysInMonth * 100);
+  const elPct = document.getElementById('dashDaysPct');
+  if (elPct) elPct.textContent = pct + '%';
+
+  // 연속 학습 계산
+  let streak = 0, maxStreak = 0, cur = 0;
+  const allStudied = new Set();
+  db.sessions.forEach(s => {
+    const p = s.date.split('.');
+    allStudied.add(`${p[0]}.${String(parseInt(p[1])).padStart(2,'0')}.${String(parseInt(p[2])).padStart(2,'0')}`);
+  });
+  const d = new Date(today);
+  while (true) {
+    const key = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    if (allStudied.has(key)) { streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  const allDates = [...allStudied].sort();
+  let tmp = 1;
+  for (let i = 1; i < allDates.length; i++) {
+    const prev = new Date(allDates[i-1].replace(/\./g,'-'));
+    const curr = new Date(allDates[i].replace(/\./g,'-'));
+    const diff = (curr - prev) / 86400000;
+    if (diff === 1) { tmp++; maxStreak = Math.max(maxStreak, tmp); } else tmp = 1;
+  }
+  maxStreak = Math.max(maxStreak, streak);
+  const elStreak = document.getElementById('dashStreak');
+  const elMax = document.getElementById('dashMaxStreak');
+  if (elStreak) elStreak.textContent = streak + '일';
+  if (elMax) elMax.textContent = maxStreak + '일';
+
+  // 이번 주 위클리 스트립
+  renderWeekStrip(today, studiedDates);
+
+  // 학습 유형별 도넛 차트
+  const allPhrasesSrc = db.sessions.flatMap(s => s.phrases);
+  const upCount = allPhrasesSrc.filter(p => p.id && p.id.includes('_up_')).length;
+  const chCount = allPhrasesSrc.filter(p => p.id && p.id.includes('_ch_')).length;
+  const lkCount = allPhrasesSrc.filter(p => p.id && p.id.includes('_lk_')).length;
+  const total3 = upCount + chCount + lkCount || 0;
+
+  const ringSvg = document.getElementById('daysRing');
+  if (ringSvg) {
+    const cx = 140, cy = 115, R = 90, ri = 46;
+    const colors = ['#7C3AED', '#A78BFA', '#DDD6FE'];
+    const counts = [upCount, chCount, lkCount];
+    const labels = ['튜터', 'AI', '컨텐츠'];
+
+    if (total3 === 0) {
+      // 데이터 없을 때 빈 링
+      ringSvg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--accent-light)" stroke-width="${R - ri}"/>`;
+    } else {
+      const TAU = 2 * Math.PI;
+      const gap = 0.025; // 라디안 gap
+      let startAngle = -Math.PI / 2;
+      let paths = '';
+
+      counts.forEach((cnt, i) => {
+        if (cnt === 0) return;
+        const fraction = cnt / total3;
+        const sweep = TAU * fraction - gap;
+        const endAngle = startAngle + sweep;
+
+        const x1 = cx + R * Math.cos(startAngle + gap/2);
+        const y1 = cy + R * Math.sin(startAngle + gap/2);
+        const x2 = cx + R * Math.cos(endAngle);
+        const y2 = cy + R * Math.sin(endAngle);
+        const xi1 = cx + ri * Math.cos(endAngle);
+        const yi1 = cy + ri * Math.sin(endAngle);
+        const xi2 = cx + ri * Math.cos(startAngle + gap/2);
+        const yi2 = cy + ri * Math.sin(startAngle + gap/2);
+        const large = sweep > Math.PI ? 1 : 0;
+
+        paths += `<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${large},1 ${x2.toFixed(2)},${y2.toFixed(2)} L${xi1.toFixed(2)},${yi1.toFixed(2)} A${ri},${ri} 0 ${large},0 ${xi2.toFixed(2)},${yi2.toFixed(2)} Z" fill="${colors[i]}"/>`;
+
+        // 퍼센트 라벨 — 중간 각도
+        if (fraction > 0.06) {
+          const midAngle = startAngle + gap/2 + sweep / 2;
+          const labelR = (R + ri) / 2;
+          const lx = cx + labelR * Math.cos(midAngle);
+          const ly = cy + labelR * Math.sin(midAngle);
+          const pct = Math.round(fraction * 100);
+          paths += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="white" font-family="DM Sans,sans-serif">${pct}%</text>`;
+        }
+
+        startAngle += sweep + gap;
+      });
+
+      // 가운데 흰 원 (도넛 구멍)
+      ringSvg.innerHTML = paths + `<circle cx="${cx}" cy="${cy}" r="${ri}" fill="var(--bg)"/>`;
+    }
+  }
+
+  // ── 섹션3: 리뷰 링 ──
   const answered = db.stats.totalAnswered || 0;
-  document.getElementById('statQuizzesCorrect').textContent = correct;
-  document.getElementById('statQuizzesTotal').textContent = answered;
-  renderCalendar();
-  renderTopicCounts(allPhrases);
-  renderWrongList(allPhrases);
-  renderRecentList(allPhrases);
-  renderProfileFilter(allPhrases);
+  const correct = db.stats.totalCorrect || 0;
+  const quizPct = answered > 0 ? Math.round(correct / answered * 100) : 0;
+  const elReviewed = document.getElementById('dashReviewed');
+  if (elReviewed) elReviewed.innerHTML = (db.recentReviewed?.length || 0) + '<span>개 복습</span>';
+
+  const qPctEl = document.getElementById('quizPct');
+  const elQC = document.getElementById('quizCorrect');
+  const elQT = document.getElementById('quizTotal');
+  if (qPctEl) qPctEl.textContent = quizPct + '%';
+  if (elQC) elQC.textContent = Math.round(correct);
+  if (elQT) elQT.textContent = answered;
+  renderDonut('quizDonut', quizPct);
+
+  // 플래시카드 통계
+  const fGot = db.flashStats?.got || 0;
+  const fTotal = db.flashStats?.total || 0;
+  const fPct = fTotal > 0 ? Math.round(fGot / fTotal * 100) : 0;
+  const fPctEl = document.getElementById('flashPct');
+  const elFG = document.getElementById('flashGot');
+  const elFT = document.getElementById('flashTotal');
+  if (fPctEl) fPctEl.textContent = fPct + '%';
+  if (elFG) elFG.textContent = fGot;
+  if (elFT) elFT.textContent = fTotal;
+  renderDonut('flashDonut', fPct);
+}
+
+function renderDonut(id, pct) {
+  const svg = document.getElementById(id);
+  if (!svg) return;
+  const r = 46, cx = 60, cy = 65, sw = 14;
+  const circ = 2 * Math.PI * r;
+  const filled = circ * pct / 100;
+  const gap = circ - filled;
+  svg.innerHTML = `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(var(--accent-rgb),.2)" stroke-width="${sw}"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${sw}"
+      stroke-dasharray="${filled.toFixed(1)} ${gap.toFixed(1)}"
+      stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>`;
+}
+
+function renderWeekStrip(today, studiedDates) {
+  const strip = document.getElementById('weekStrip');
+  if (!strip) return;
+  const DAYS = ['일','월','화','수','목','금','토'];
+  const dow = today.getDay();
+  let cells = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - dow + i);
+    const dateNum = d.getDate();
+    const isToday = i === dow;
+    const isStudied = studiedDates.has(String(dateNum));
+    const todayCls = isToday ? 'today-cell' : '';
+    const numCls = isStudied ? 'studied' : isToday ? 'today-num' : '';
+    const nameCls = isToday ? 'today-name' : '';
+    cells += `<div class="wday-cell"><div class="wday-wrap ${todayCls}">
+      <div class="wday-name ${nameCls}">${DAYS[i]}</div>
+      <div class="wday-num ${numCls}">${dateNum}</div>
+    </div></div>`;
+  }
+  strip.innerHTML = cells;
+}
+
+function renderRadarChart(allPhrases) {
+  const svg = document.getElementById('radarChart');
+  if (!svg) return;
+  const TOPICS = ['일상','예술','육아','업무','웰니스','디자인·기획'];
+  const counts = {};
+  TOPICS.forEach(t => counts[t] = 0);
+  allPhrases.forEach(p => { if (counts[p.topic] !== undefined) counts[p.topic]++; });
+  const max = Math.max(...Object.values(counts), 1);
+  const cx = 140, cy = 122, R = 84;
+  const angles = TOPICS.map((_, i) => (Math.PI * 2 * i / 6) - Math.PI / 2);
+  const pt = (r, i) => [cx + r * Math.cos(angles[i]), cy + r * Math.sin(angles[i])];
+
+  let grid = '';
+  [1, 0.67, 0.33].forEach(f => {
+    const pts = TOPICS.map((_,i) => pt(R*f,i).join(',')).join(' ');
+    grid += `<polygon points="${pts}" fill="none" stroke="var(--border)" stroke-width="0.8"/>`;
+  });
+  let axes = TOPICS.map((_,i) => {
+    const [x,y] = pt(R,i);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--border)" stroke-width="0.8"/>`;
+  }).join('');
+  const dataPts = TOPICS.map((t,i) => pt(R * Math.min(counts[t]/max, 1), i).join(',')).join(' ');
+
+  // 라벨: 토픽명은 고정 바깥, 숫자는 실제 데이터 꼭지점 끝에
+  const labels = TOPICS.map((t,i) => {
+    const [lx, ly] = pt(R + 16, i);
+    const anchor = lx < cx - 5 ? 'end' : lx > cx + 5 ? 'start' : 'middle';
+    // 데이터 꼭지점 — 0이면 중심, 값 있으면 그 끝
+    const dataR = R * Math.min(counts[t]/max, 1);
+    const [dx, dy] = pt(dataR + 10, i);
+    const numAnchor = dx < cx - 5 ? 'end' : dx > cx + 5 ? 'start' : 'middle';
+    return `<text x="${lx}" y="${ly+4}" text-anchor="${anchor}" font-size="11" font-weight="400" fill="var(--ink2)" font-family="DM Sans,Apple SD Gothic Neo,Malgun Gothic,sans-serif">${t}</text>
+<text x="${dx}" y="${dy+4}" text-anchor="${numAnchor}" font-size="11" font-weight="700" fill="var(--accent)" font-family="DM Sans,Apple SD Gothic Neo,Malgun Gothic,sans-serif">${counts[t]}</text>`;
+  }).join('');
+
+  svg.innerHTML = grid + axes +
+    `<polygon points="${dataPts}" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>` +
+    TOPICS.map((t,i) => { const [x,y] = pt(R * Math.min(counts[t]/max,1), i); return `<circle cx="${x}" cy="${y}" r="3" fill="var(--accent)"/>`; }).join('') +
+    labels;
+}
+
+
+function toggleCharPanel() {
+  const body = document.getElementById('charPanelBody');
+  const arrow = document.getElementById('charToggleArrow');
+  const label = document.getElementById('charPanelLabel');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (label) label.textContent = isOpen ? '내 설정 보기' : '내 설정 닫기';
+  if (!isOpen) renderCharPanelBody();
+}
+
+function renderCharPanelBody() {
+  const body = document.getElementById('charPanelBody');
+  if (!body) return;
+  const styleMap = { casual:'Casual', business:'Business', formal:'Formal' };
+  const toneMap = { plain:'담백한', concise:'간결한', friendly:'친근한', sharp:'냉철한', rich:'풍부한', vivid:'화려한' };
+  const goalMap = { daily:'일상 회화', business:'비즈니스', travel:'여행', exam:'시험(OPIC)' };
+
+  function chips(group, options, multi=false) {
+    return options.map(([val, label]) => {
+      const sel = multi
+        ? (Array.isArray(character.style2) ? character.style2 : [character.style2||'']).includes(val)
+        : character[group] === val;
+      return `<button class="char-chip${sel?' selected':''}" data-group="${group}" data-val="${val}" onclick="selectChip(this);saveCharacter()" style="font-size:12px;padding:6px 12px;">${label}</button>`;
+    }).join('');
+  }
+
+  body.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">말투 상황</div>
+      <div class="char-chips-row">${chips('style1',[['casual','Casual'],['business','Business'],['formal','Formal']])}</div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">톤 <span style="font-weight:400;color:var(--muted)">(중복 선택)</span></div>
+      <div class="char-chips-row">${chips('style2',[['plain','담백한'],['concise','간결한'],['friendly','친근한'],['sharp','냉철한'],['rich','풍부한'],['vivid','화려한']],true)}</div>
+    </div>
+    <div style="margin-bottom:4px;">
+      <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">영어 목표</div>
+      <div class="char-chips-row">${chips('goal',[['daily','일상 회화'],['business','비즈니스'],['travel','여행'],['exam','시험(OPIC)']])}</div>
+    </div>
+    <div class="char-preview" id="charPreviewChat" style="margin-top:10px;font-size:12px;"></div>`;
+  updateCharPreview();
+}
+
+function renderInputScreen() {
+  // inputScreen은 이미 HTML에 내용이 있음 — 별도 렌더 불필요
 }
 
 let activeProfileFilter = null;
@@ -2228,7 +2675,7 @@ function retryQuiz() {
 // ══════════════════════════════════
 // GOOGLE SHEETS — 단일 소스 구조
 // ══════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxVSypnu2FcUTd1z93HhrkX35Z4SqIbz8uVbZuLakkS8QrX7HYbBhzoBneS0xWDYdcR/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzYmbRMzJk5NhWfiwC69WT7XDsR6JHb6xDut8Cn8u90SIosMol5Xfy_VN15JJ_L_tJr/exec';
 
 async function sheetsPost(payload) {
   const res = await fetch(SHEETS_URL, {
