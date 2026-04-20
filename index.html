@@ -483,7 +483,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 12px 16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;">
           <div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;align-self:flex-start;">Flash Cards</div>
           <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:2px;align-self:flex-start;" id="flashPct">0%</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">알고있음 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">정답 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
           <svg id="flashDonut" viewBox="0 0 120 130" width="100%" style="display:block;flex-shrink:0;"></svg>
         </div>
 
@@ -1461,17 +1461,23 @@ Keep responses concise and encouraging.`;
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600, system: systemPrompt, messages: chatHistory })
     });
     const data = await res.json();
-    const reply = data.content.map(c => c.text || '').join('');
+    const reply = data.content.filter(c => c.type === 'text').map(c => c.text).join('');
     chatHistory.push({ role: 'assistant', content: reply });
     const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
     const last = bubbles[bubbles.length - 1];
-    const cleanReply = reply.replace(/💡 Correction:.*$/ms, '').trim();
+    const cleanReply = reply.replace(/💡 Correction:[\s\S]*$/m, '').trim();
     if (last) {
-      last.querySelector('.chat-text').innerHTML = `
-        ${cleanReply}
-        <button onclick="speak('${cleanReply.replace(/'/g,"&#39;").replace(/\n/g,' ')}')" 
-          style="display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;" title="읽어주기">🔊</button>`;
-      // 자동으로 읽어주기
+      const textEl = last.querySelector('.chat-text');
+      textEl.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = cleanReply;
+      textEl.appendChild(span);
+      const speakBtn = document.createElement('button');
+      speakBtn.style.cssText = 'display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;';
+      speakBtn.title = '읽어주기';
+      speakBtn.textContent = '🔊';
+      speakBtn.onclick = () => speak(cleanReply);
+      textEl.appendChild(speakBtn);
       speak(cleanReply);
     }
     const corrMatch = reply.match(/💡 Correction:([\s\S]*?)(?=\n\n|$)/);
@@ -1923,11 +1929,14 @@ function renderDashboard(allPhrases) {
   const todayD = String(today.getDate()).padStart(2, '0');
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-  // 이번 달 수업 날짜 세트
+  // 이번 달 수업 날짜 세트 (날짜 형식: YYYY.M.D 또는 YY.M.D 모두 처리)
   const studiedDates = new Set();
   db.sessions.forEach(s => {
     const p = s.date.split('.');
-    if (p[0] === todayY && p[1] === todayM.replace(/^0/,'')) {
+    if (p.length < 3) return;
+    const y = p[0].length === 2 ? '20' + p[0] : p[0];
+    const m = String(parseInt(p[1]));
+    if (y === todayY && m === String(today.getMonth() + 1)) {
       studiedDates.add(String(parseInt(p[2])));
     }
   });
@@ -2574,8 +2583,15 @@ function showHint() {
   if (typingWrap) typingWrap.style.display = 'none';
   const choicesArea = document.getElementById('choicesArea');
   choicesArea.style.display = 'block';
-  document.getElementById('choicesList').innerHTML = shuffleArr([...(q.choices || generateChoices(q.answer))]).map(c =>
-    `<button class="choice" onclick="checkHintChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`).join('');
+  const choicesList = document.getElementById('choicesList');
+  choicesList.innerHTML = '';
+  shuffleArr([...(q.choices || generateChoices(q.answer))]).forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = c;
+    btn.onclick = () => checkHintChoice(btn, c);
+    choicesList.appendChild(btn);
+  });
   document.getElementById('qTypeLabel').textContent = '힌트 사용';
 }
 
@@ -2897,6 +2913,10 @@ function flashAnswer(known) {
     flashUnknown++;
     db.wrongCount[card.id] = (db.wrongCount[card.id] || 0) + 1;
   }
+  // flashStats 업데이트
+  if (!db.flashStats) db.flashStats = { got: 0, total: 0 };
+  db.flashStats.total++;
+  if (known) db.flashStats.got++;
   saveDB();
   syncStatsToSheets(card.id, known);
   flashIndex++;
