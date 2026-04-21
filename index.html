@@ -746,16 +746,26 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <span>관심 주제 컨텐츠 분석</span>
       </div>
       <div class="learn-panel-body">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
-          분석하고 싶은 영어 컨텐츠의 URL을 붙여넣으세요.<br>
-          <span style="font-size:11px;">YouTube · 아티클 · Reddit · 뉴스레터 등</span>
+        <!-- 안내 -->
+        <div style="background:var(--accent-light);border-left:3px solid var(--accent);border-radius:0 var(--rs) var(--rs) 0;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--ink2);line-height:1.7;">
+          📋 <strong>컨텐츠 텍스트를 붙여넣으면 표현을 추출해드려요</strong><br>
+          <span style="font-size:12px;color:var(--muted);">YouTube 자막 · 아티클 본문 · 팟캐스트 스크립트 · 이메일 등</span>
         </div>
 
-        <div class="link-input-row">
-          <input class="link-input" id="linkInput" type="url" placeholder="https://..." oninput="checkLinkInput()"/>
-          <button class="link-fetch-btn" id="linkFetchBtn" onclick="fetchAndExtract()" disabled>분석</button>
+        <!-- 텍스트 입력 (디폴트) -->
+        <div style="margin-bottom:14px;">
+          <label class="char-label">컨텐츠 텍스트</label>
+          <textarea id="linkTextInput"
+            style="width:100%;min-height:160px;padding:14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;line-height:1.7;color:var(--ink);background:var(--surface);"
+            placeholder="여기에 영어 텍스트를 붙여넣으세요...&#10;&#10;예시)&#10;YouTube 자막: 영상 페이지 → 더보기 → 스크립트 열기 → 복사&#10;아티클: 본문 전체 선택 → 복사"
+            oninput="checkDirectText()"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <span id="linkTextCount" style="font-size:11px;color:var(--muted);">0자</span>
+            <span style="font-size:11px;color:var(--muted);">최소 50자 이상 입력</span>
+          </div>
         </div>
 
+        <!-- 컨텐츠 유형 -->
         <div style="margin-bottom:14px;">
           <div style="font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">컨텐츠 유형</div>
           <div class="link-type-chips">
@@ -766,6 +776,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
           </div>
         </div>
 
+        <!-- 말투 -->
         <div style="margin-bottom:14px;">
           <label class="char-label">말투 스타일</label>
           <div class="char-chips-row" style="margin-top:4px;">
@@ -774,6 +785,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
           </div>
         </div>
 
+        <!-- 주제 -->
         <div style="margin-bottom:14px;">
           <label class="char-label">주제 (선택)</label>
           <div class="char-chips-row" style="margin-top:4px;">
@@ -786,7 +798,13 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
           </div>
         </div>
 
-        <!-- 미리보기 + 예시 문장 -->
+        <!-- 분석 버튼 -->
+        <button class="char-save-btn" id="linkAnalyzeBtn" onclick="analyzeDirectText()" disabled
+          style="opacity:.4;cursor:not-allowed;">
+          ⚡ 표현 분석하기
+        </button>
+
+        <!-- 미리보기 -->
         <div class="link-preview" id="linkPreview"></div>
 
         <button class="char-save-btn" id="linkSaveBtn" style="display:none;" onclick="saveLinkPhrases()">
@@ -919,14 +937,21 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <span>관심 주제 컨텐츠 분석</span>
       </div>
       <div class="learn-panel-body">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
-          분석하고 싶은 영어 컨텐츠의 URL을 붙여넣으세요.<br>
-          <span style="font-size:11px;">YouTube · 아티클 · Reddit · 뉴스레터 등</span>
+        <div style="background:var(--accent-light);border-left:3px solid var(--accent);border-radius:0 var(--rs) var(--rs) 0;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--ink2);line-height:1.7;">
+          📋 <strong>컨텐츠 텍스트를 붙여넣으면 표현을 추출해드려요</strong><br>
+          <span style="font-size:12px;color:var(--muted);">YouTube 자막 · 아티클 본문 · 팟캐스트 스크립트 · 이메일 등</span>
         </div>
 
-        <div class="link-input-row">
-          <input class="link-input" id="linkInput" type="url" placeholder="https://..." oninput="checkLinkInput()"/>
-          <button class="link-fetch-btn" id="linkFetchBtn" onclick="fetchAndExtract()" disabled>분석</button>
+        <div style="margin-bottom:14px;">
+          <label class="char-label">컨텐츠 텍스트</label>
+          <textarea id="linkTextInput"
+            style="width:100%;min-height:160px;padding:14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;line-height:1.7;color:var(--ink);background:var(--surface);"
+            placeholder="여기에 영어 텍스트를 붙여넣으세요...&#10;&#10;예시)&#10;YouTube 자막: 영상 페이지 → 더보기 → 스크립트 열기 → 복사&#10;아티클: 본문 전체 선택 → 복사"
+            oninput="checkDirectText()"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <span id="linkTextCount" style="font-size:11px;color:var(--muted);">0자</span>
+            <span style="font-size:11px;color:var(--muted);">최소 50자 이상 입력</span>
+          </div>
         </div>
 
         <div style="margin-bottom:14px;">
@@ -936,6 +961,14 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
             <button class="link-type-chip" data-linktype="youtube" onclick="selectLinkType(this)">▶️ YouTube</button>
             <button class="link-type-chip" data-linktype="social" onclick="selectLinkType(this)">💬 SNS/Reddit</button>
             <button class="link-type-chip" data-linktype="other" onclick="selectLinkType(this)">🔖 기타</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="char-label">말투 스타일</label>
+          <div class="char-chips-row" style="margin-top:4px;">
+            <button class="char-chip selected" data-group="linkTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>가벼운 논의 / 대화</small></button>
+            <button class="char-chip" data-group="linkTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식 미팅 / 보고</small></button>
           </div>
         </div>
 
@@ -951,7 +984,11 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
           </div>
         </div>
 
-        <!-- 미리보기 + 예시 문장 -->
+        <button class="char-save-btn" id="linkAnalyzeBtn" onclick="analyzeDirectText()" disabled
+          style="opacity:.4;cursor:not-allowed;">
+          ⚡ 표현 분석하기
+        </button>
+
         <div class="link-preview" id="linkPreview"></div>
 
         <button class="char-save-btn" id="linkSaveBtn" style="display:none;" onclick="saveLinkPhrases()">
@@ -1251,8 +1288,12 @@ function showInputMode(mode) {
   }
   if (mode === 'link') {
     document.getElementById('linkPanel').classList.add('show');
-    document.getElementById('linkInput').value = '';
-    document.getElementById('linkFetchBtn').disabled = true;
+    const ti = document.getElementById('linkTextInput');
+    if (ti) ti.value = '';
+    const cnt = document.getElementById('linkTextCount');
+    if (cnt) cnt.textContent = '0자';
+    const btn = document.getElementById('linkAnalyzeBtn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed'; }
     document.getElementById('linkPreview').classList.remove('show');
     document.getElementById('linkSaveBtn').style.display = 'none';
     linkExtractedPhrases = [];
@@ -1617,9 +1658,80 @@ ${convo}`;
 // ══════════════════════════════════
 // [FIX 5] 컨텐츠 링크 분석
 // ══════════════════════════════════
-function checkLinkInput() {
-  const val = document.getElementById('linkInput').value.trim();
-  document.getElementById('linkFetchBtn').disabled = !val || !val.startsWith('http');
+function checkDirectText() {
+  const val = document.getElementById('linkTextInput')?.value || '';
+  const countEl = document.getElementById('linkTextCount');
+  if (countEl) countEl.textContent = val.length + '자';
+  const btn = document.getElementById('linkAnalyzeBtn');
+  if (btn) {
+    const ok = val.trim().length >= 50;
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? '1' : '.4';
+    btn.style.cursor = ok ? 'pointer' : 'not-allowed';
+  }
+}
+
+// 기존 checkLinkInput — 하위 호환용 (빈 함수로 유지)
+function checkLinkInput() {}
+
+async function analyzeDirectText() {
+  if (!apiKey) { alert('API 키를 먼저 설정해주세요'); return; }
+  const text = document.getElementById('linkTextInput')?.value.trim();
+  if (!text || text.length < 50) { alert('텍스트를 더 입력해주세요 (최소 50자)'); return; }
+
+  const selectedTopics = [...document.querySelectorAll('.char-chip[data-group="linktopic"].selected')].map(b => b.dataset.val);
+  const topicHint = selectedTopics.length ? selectedTopics.join(', ') : '미지정';
+  const typeLabels = { article: '아티클', youtube: 'YouTube 영상', social: 'SNS/커뮤니티', other: '컨텐츠' };
+  const typeLabel = typeLabels[selectedLinkType] || '컨텐츠';
+
+  const linkTone = document.querySelector('.char-chip[data-group="linkTone"].selected')?.dataset.val || 'Casual';
+  const linkToneCtx = linkTone === 'Formal'
+    ? '\n말투: Formal(격식체). 예문은 공식적·전문적 상황의 표현 위주로 추출해줘.'
+    : '\n말투: Casual(일상·비즈니스). 예문은 자연스러운 일상 대화나 업무 상황의 표현 위주로 추출해줘.';
+
+  const today = new Date();
+  const datePrefix = `${String(today.getFullYear()).slice(2)}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+
+  showLoading(`${typeLabel} 분석 중...`);
+
+  const prompt = `다음 텍스트에서만 영어 학습 항목 15개를 추출해줘. 텍스트에 없는 내용은 절대 만들어내지 마.
+주제 힌트: ${topicHint}${linkToneCtx}
+
+JSON 배열만 반환. 다른 텍스트 없이.
+
+필드: id("${datePrefix}_lk_001" 형식), type(correction/expression/vocab), topic(일상/육아/업무/예술/기획/웰니스), original, english(본문 실제 문장), expression, korean, difficulty(medium/hard), fill_sentence, fill_answer, fill_choices(4개 배열)
+
+텍스트:
+${text.slice(0, 8000)}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    linkExtractedPhrases = JSON.parse(raw);
+    hideLoading();
+
+    const preview = document.getElementById('linkPreview');
+    const examplesHtml = linkExtractedPhrases.slice(0, 4).map(p => `
+      <div class="link-example-item">
+        <div class="link-example-en">${p.english}</div>
+        <div class="link-example-ko">${p.korean}</div>
+      </div>`).join('');
+    preview.innerHTML = `
+      <strong>📋 ${typeLabel} 분석 완료</strong>
+      <span style="font-size:12px;color:var(--accent);font-weight:500;">표현 ${linkExtractedPhrases.length}개 추출</span>
+      <div class="link-preview-examples" style="margin-top:10px;">${examplesHtml}</div>
+      ${linkExtractedPhrases.length > 4 ? `<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;">+${linkExtractedPhrases.length - 4}개 더 있어요</div>` : ''}`;
+    preview.classList.add('show');
+    document.getElementById('linkSaveBtn').style.display = 'block';
+  } catch(e) {
+    hideLoading();
+    alert('분석 오류: ' + e.message);
+  }
 }
 
 function selectLinkType(btn) {
@@ -1799,27 +1911,17 @@ ${text.slice(0, 8000)}`;
 
 async function saveLinkPhrases() {
   if (!linkExtractedPhrases.length) return;
-  const url = document.getElementById('linkInput').value.trim();
-  const domain = (() => { try { return new URL(url).hostname.replace('www.',''); } catch(e) { return 'link'; }})();
+  const typeLabels = { article: '아티클', youtube: 'YouTube', social: 'SNS', other: '컨텐츠' };
+  const typeLabel = typeLabels[selectedLinkType] || '컨텐츠';
   const today = new Date();
   const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
   const ts = Date.now().toString().slice(-4);
   const datePrefix2 = `${String(today.getFullYear()).slice(2)}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
   const phrases = linkExtractedPhrases.map((p, i) => ({ ...p, id: `${datePrefix2}_lk_${ts}_${String(i+1).padStart(3,'0')}` }));
   const dayNames = ['일','월','화','수','목','금','토'];
-  const session = {
-    id: 'link_' + Date.now(),
-    date: dateStr,
-    label: `🔗 ${domain}`,
-    dayOfWeek: dayNames[today.getDay()],
-    topics: [...new Set(phrases.map(p => p.topic))],
-    phrases,
-    sourceUrl: url
-  };
   db.sessions = db.sessions.filter(s => !s.id.startsWith('sheets_'));
   saveDB();
   showLoading('Google Sheets에 저장 중…');
-  // 링크 패널에서 선택한 말투 독립 읽기
   const linkTone = document.querySelector('.char-chip[data-group="linkTone"].selected')?.dataset.val || 'Casual';
   await syncToSheets(phrases, dateStr, 'link', linkTone);
   await loadSheetsData(true);
@@ -1827,7 +1929,7 @@ async function saveLinkPhrases() {
   hideLoading();
   currentPhrases = phrases;
   const pool = buildWeightedPool(phrases, Math.min(10, phrases.length));
-  document.getElementById('phrasesTitle').textContent = `🔗 ${domain} 분석`;
+  document.getElementById('phrasesTitle').textContent = `📋 ${typeLabel} 분석`;
   document.getElementById('phrasesMeta').textContent = `표현 ${phrases.length}개`;
   if (confirm(`✓ ${phrases.length}개 표현 저장 완료!\n지금 바로 퀴즈를 풀어볼까요?`)) {
     startQuizWith(pool);
