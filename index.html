@@ -483,7 +483,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 12px 16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;">
           <div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;align-self:flex-start;">Flash Cards</div>
           <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:2px;align-self:flex-start;" id="flashPct">0%</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">알고있음 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">정답 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
           <svg id="flashDonut" viewBox="0 0 120 130" width="100%" style="display:block;flex-shrink:0;"></svg>
         </div>
 
@@ -518,37 +518,44 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 <!-- ══ LEARN ══ -->
 <!-- ══ REVIEW ══ -->
 <div class="screen" id="reviewScreen">
-  <div class="char-hero">
-    <h3>리뷰하기</h3>
-    <p>날짜별 주제별 표현을 복습해요</p>
-  </div>
-  <div style="padding: 20px var(--side) 100px;">
+  <div style="padding: 0 0 100px;">
 
-    <!-- 말투 필터 (드롭다운) -->
-    <div id="profileFilterSection" style="margin-bottom:20px;">
-      <div class="home-section-title">말투 설정별</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <select id="profileFilterSelect" onchange="setProfileFilter(this.value==='전체'?null:this.value)"
-          style="appearance:none;-webkit-appearance:none;border:1.5px solid var(--border);border-radius:12px;padding:10px 36px 10px 14px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;outline:none;min-width:150px;background:var(--bg) url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22%3E%3Cpath d=%22M1 1l5 5 5-5%22 stroke=%22%23999%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3C/svg%3E') no-repeat right 12px center;background-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);font-family:'DM Sans',sans-serif;">
-          <option value="전체">전체</option>
-          <option value="Casual">Casual</option>
-          <option value="Formal">Formal</option>
-        </select>
-        <span id="profileFilterCount" style="display:none;background:var(--accent-light);color:var(--accent);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;"></span>
+    <!-- 말투 필터 — 좌우 스위치 -->
+    <div id="profileFilterSection" style="padding: 14px var(--side) 14px; border-bottom: 1px solid var(--border); background: var(--bg);">
+      <div style="display:flex;background:var(--surface);border-radius:24px;padding:3px;gap:0;width:100%;">
+        <button id="toneBtn-all" onclick="setProfileFilter(null)"
+          style="flex:1;padding:8px 0;border-radius:20px;border:1.5px solid var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(var(--accent-rgb),.15);">
+          전체
+        </button>
+        <button id="toneBtn-Casual" onclick="setProfileFilter('Casual')"
+          style="flex:1;padding:8px 0;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;background:transparent;color:var(--muted);">
+          Casual
+        </button>
+        <button id="toneBtn-Formal" onclick="setProfileFilter('Formal')"
+          style="flex:1;padding:8px 0;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;background:transparent;color:var(--muted);">
+          Formal
+        </button>
       </div>
     </div>
 
-    <!-- 퀴즈 + 플래시카드 버튼 -->
-    <div class="quick-quiz-wrap" style="margin-bottom:24px;">
-      <button class="quick-quiz-btn" onclick="startSmartQuiz()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Expression Quiz
-      </button>
-      <button class="quick-quiz-btn secondary" onclick="startFlashCards()" style="margin-top:0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        Flash Cards
-      </button>
+    <!-- 랜덤 리뷰 제목 + 퀴즈/플래시카드 버튼 (문장수 표시) -->
+    <div style="padding: 20px var(--side) 24px; border-bottom: 1px solid var(--border);">
+      <div class="home-section-title" style="margin-bottom:14px;">랜덤 리뷰</div>
+      <div class="quick-quiz-wrap" style="margin-bottom:0;">
+        <button class="quick-quiz-btn" onclick="startSmartQuiz()" style="position:relative;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Expression Quiz
+          <span id="quizCountBadge" style="font-size:11px;font-weight:400;opacity:.75;margin-left:6px;"></span>
+        </button>
+        <button class="quick-quiz-btn secondary" onclick="startFlashCards()" style="margin-top:0;position:relative;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Flash Cards
+          <span id="flashCountBadge" style="font-size:11px;font-weight:400;opacity:.75;margin-left:6px;"></span>
+        </button>
+      </div>
     </div>
+
+    <div style="padding: 20px var(--side) 0px;">
 
     <!-- 날짜별 표현 복습 -->
     <div class="home-section">
@@ -600,10 +607,12 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
         데이터 새로고침
       </button>
-      <button onclick="resetLocalData()" style="width:100%;padding:12px;background:none;border:1.5px solid var(--border);border-radius:var(--rs);font-size:12px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;">
+      <button onclick="resetLocalData()" style="width:100%;padding:12px;background:none;border:1.5px solid var(--border);border-radius:var(--rs);font-size:12px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;">
         🗑 로컬 데이터 초기화
       </button>
     </div>
+
+    </div><!-- /padding wrap -->
   </div>
 </div>
 
@@ -2047,25 +2056,29 @@ function renderDashboard(allPhrases) {
   }
 
   // ── 섹션3: 리뷰 링 ──
-  const answered = db.stats.totalAnswered || 0;
-  const correct = db.stats.totalCorrect || 0;
-  const quizPct = answered > 0 ? Math.round(correct / answered * 100) : 0;
+  // 퀴즈 통계 — 시트 데이터의 review_count / wrong_count 합산
+  const allForQuiz = db.sessions.flatMap(s => s.phrases);
+  const totalReviewed = allForQuiz.reduce((s, p) => s + (Number(p.review_count) || 0), 0);
+  const totalWrong    = allForQuiz.reduce((s, p) => s + (Number(p.wrong_count)  || 0), 0);
+  const totalCorrect  = totalReviewed - totalWrong;
+  const quizPct = totalReviewed > 0 ? Math.round(totalCorrect / totalReviewed * 100) : 0;
+
   const elReviewed = document.getElementById('dashReviewed');
-  if (elReviewed) elReviewed.innerHTML = (db.recentReviewed?.length || 0) + '<span>개 복습</span>';
+  if (elReviewed) elReviewed.innerHTML = totalReviewed + '<span>개 복습</span>';
 
   const qPctEl = document.getElementById('quizPct');
   const elQC = document.getElementById('quizCorrect');
   const elQT = document.getElementById('quizTotal');
   if (qPctEl) qPctEl.textContent = quizPct + '%';
-  if (elQC) elQC.textContent = Math.round(correct);
-  if (elQT) elQT.textContent = answered;
+  if (elQC) elQC.textContent = totalCorrect;
+  if (elQT) elQT.textContent = totalReviewed;
   renderDonut('quizDonut', quizPct);
 
   // 플래시카드 통계 — 시트 데이터의 flash_count / notyet_count 합산
   const allForFlash = db.sessions.flatMap(s => s.phrases);
-  const fGot   = allForFlash.reduce((s, p) => s + (p.flash_count  || 0), 0);
-  const fNotYet = allForFlash.reduce((s, p) => s + (p.notyet_count || 0), 0);
-  const fTotal = fGot + fNotYet;
+  const fGot    = allForFlash.reduce((s, p) => s + (Number(p.flash_count)  || 0), 0);
+  const fNotYet = allForFlash.reduce((s, p) => s + (Number(p.notyet_count) || 0), 0);
+  const fTotal  = fGot + fNotYet;
   const fPct = fTotal > 0 ? Math.round(fGot / fTotal * 100) : 0;
   const fPctEl = document.getElementById('flashPct');
   const elFG = document.getElementById('flashGot');
@@ -2209,29 +2222,58 @@ function renderInputScreen() {
 let activeProfileFilter = null;
 
 function renderProfileFilter(allPhrases) {
-  // 드롭다운은 항상 표시 — 값 초기화만
-  const sel = document.getElementById('profileFilterSelect');
-  if (sel && !sel.value) sel.value = '전체';
-  updateProfileFilterCount(allPhrases);
+  updateToneSwitchUI(activeProfileFilter, allPhrases);
+}
+
+function updateToneSwitchUI(activeVal, allPhrases) {
+  // 전체: accent 채움 / Casual·Formal: 흰 배경 + 하늘색 테두리 + 하늘색 글씨
+  const defs = [
+    { id: 'toneBtn-all',    val: null },
+    { id: 'toneBtn-Casual', val: 'Casual' },
+    { id: 'toneBtn-Formal', val: 'Formal' },
+  ];
+  defs.forEach(({ id, val }) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const isActive = activeVal === val;
+    if (isActive && val === null) {
+      // 전체 선택 — 흰 배경 + 하늘색 테두리 + 하늘색 글씨
+      btn.style.background  = '#fff';
+      btn.style.color       = 'var(--accent)';
+      btn.style.border      = '1.5px solid var(--accent)';
+      btn.style.boxShadow   = '0 1px 4px rgba(var(--accent-rgb),.15)';
+    } else if (isActive) {
+      // Casual / Formal 선택 — 흰 배경 + 하늘색 테두리 + 하늘색 글씨
+      btn.style.background  = '#fff';
+      btn.style.color       = 'var(--accent)';
+      btn.style.border      = '1.5px solid var(--accent)';
+      btn.style.boxShadow   = '0 1px 4px rgba(var(--accent-rgb),.15)';
+    } else {
+      // 비선택
+      btn.style.background  = 'transparent';
+      btn.style.color       = 'var(--muted)';
+      btn.style.border      = '1.5px solid transparent';
+      btn.style.boxShadow   = 'none';
+    }
+  });
+
+  // 버튼 옆 문장 수 뱃지
+  const phrases = allPhrases || db.sessions.flatMap(s => s.phrases);
+  const filtered = activeVal ? phrases.filter(p => p.character_profile === activeVal) : phrases;
+  const cnt = filtered.length;
+  const badge = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  badge('quizCountBadge',  cnt > 0 ? `${cnt}개` : '');
+  badge('flashCountBadge', cnt > 0 ? `${cnt}개` : '');
 }
 
 function updateProfileFilterCount(allPhrases) {
-  const val = activeProfileFilter;
-  const countEl = document.getElementById('profileFilterCount');
-  if (!countEl) return;
-  if (val) {
-    const cnt = allPhrases.filter(p => p.character_profile === val).length;
-    countEl.textContent = `${cnt}개 문장`;
-    countEl.style.display = 'inline';
-  } else {
-    countEl.style.display = 'none';
-  }
+  updateToneSwitchUI(activeProfileFilter, allPhrases);
 }
 
 function setProfileFilter(val) {
   activeProfileFilter = val;
   const allPhrases = db.sessions.flatMap(s => s.phrases);
-  updateProfileFilterCount(allPhrases);
+  updateToneSwitchUI(val, allPhrases);
   const filtered = val ? allPhrases.filter(p => p.character_profile === val) : allPhrases;
   renderTopicCounts(filtered);
   renderWrongList(filtered);
@@ -2643,6 +2685,17 @@ function recordResult(phraseId, correct, qText) {
   else if (db.wrongCount[phraseId] > 0) db.wrongCount[phraseId]--;
   if (!db.recentReviewed) db.recentReviewed = [];
   db.recentReviewed = [phraseId, ...db.recentReviewed.filter(id => id !== phraseId)].slice(0, 20);
+
+  // 로컬 캐시 review_count / wrong_count 즉시 반영 → 홈 그래프 실시간 업데이트
+  for (const s of db.sessions) {
+    const p = s.phrases.find(x => x.id === phraseId);
+    if (p) {
+      p.review_count = (Number(p.review_count) || 0) + 1;
+      if (!correct) p.wrong_count = (Number(p.wrong_count) || 0) + 1;
+      break;
+    }
+  }
+
   saveDB();
   syncStatsToSheets(phraseId, correct);
   if (correct) quizScore++;
