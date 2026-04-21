@@ -483,7 +483,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div style="flex:1;background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px 12px 16px;display:flex;flex-direction:column;align-items:center;overflow:hidden;">
           <div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;align-self:flex-start;">Flash Cards</div>
           <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:2px;align-self:flex-start;" id="flashPct">0%</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">정답 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:12px;align-self:flex-start;">알고있음 <span id="flashGot">0</span> / <span id="flashTotal">0</span></div>
           <svg id="flashDonut" viewBox="0 0 120 130" width="100%" style="display:block;flex-shrink:0;"></svg>
         </div>
 
@@ -524,10 +524,18 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
   </div>
   <div style="padding: 20px var(--side) 100px;">
 
-    <!-- 캐릭터 필터 -->
-    <div id="profileFilterSection" style="display:none;margin-bottom:20px;">
+    <!-- 말투 필터 (드롭다운) -->
+    <div id="profileFilterSection" style="margin-bottom:20px;">
       <div class="home-section-title">말투 설정별</div>
-      <div class="cal-month-row" id="profileFilterRow"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <select id="profileFilterSelect" onchange="setProfileFilter(this.value==='전체'?null:this.value)"
+          style="appearance:none;-webkit-appearance:none;border:1.5px solid var(--border);border-radius:12px;padding:10px 36px 10px 14px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;outline:none;min-width:150px;background:var(--bg) url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22%3E%3Cpath d=%22M1 1l5 5 5-5%22 stroke=%22%23999%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3C/svg%3E') no-repeat right 12px center;background-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);font-family:'DM Sans',sans-serif;">
+          <option value="전체">전체</option>
+          <option value="Casual">Casual</option>
+          <option value="Formal">Formal</option>
+        </select>
+        <span id="profileFilterCount" style="display:none;background:var(--accent-light);color:var(--accent);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600;"></span>
+      </div>
     </div>
 
     <!-- 퀴즈 + 플래시카드 버튼 -->
@@ -951,11 +959,10 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
       </div>
     </div>
     <div class="char-section">
-      <div class="char-section-title">말투 스타일 — 상황</div>
+      <div class="char-section-title">말투 스타일</div>
       <div class="char-chips-row">
-        <button class="char-chip" data-group="style1" data-val="casual" onclick="selectChip(this)">Casual<br><small>일상·친구</small></button>
-        <button class="char-chip" data-group="style1" data-val="business" onclick="selectChip(this)">Business<br><small>직장·미팅</small></button>
-        <button class="char-chip" data-group="style1" data-val="formal" onclick="selectChip(this)">Formal<br><small>공식·발표</small></button>
+        <button class="char-chip" data-group="style1" data-val="casual" onclick="selectChip(this)">Casual<br><small>일상·친구·비즈니스</small></button>
+        <button class="char-chip" data-group="style1" data-val="formal" onclick="selectChip(this)">Formal<br><small>공식·발표·격식</small></button>
       </div>
     </div>
     <div class="char-section">
@@ -1178,11 +1185,13 @@ function hideLoading() { document.getElementById('loadingOverlay').classList.rem
 // [FIX 1] 스마트 랜덤 퀴즈 (오답 가중치 적용, 전체 회차)
 // ══════════════════════════════════
 function startSmartQuiz() {
-  const all = db.sessions.flatMap(s => s.phrases);
+  const allPhrases = db.sessions.flatMap(s => s.phrases);
+  const all = activeProfileFilter
+    ? allPhrases.filter(p => p.character_profile === activeProfileFilter)
+    : allPhrases;
   if (!all.length) { alert('먼저 수업을 불러오세요'); return; }
-  // 오답 가중치: 많이 틀린 것 우선
   const pool = buildWeightedPool(all, 10);
-  document.getElementById('phrasesTitle').textContent = '전체 스마트 퀴즈';
+  document.getElementById('phrasesTitle').textContent = activeProfileFilter ? `${activeProfileFilter} 스마트 퀴즈` : '전체 스마트 퀴즈';
   document.getElementById('phrasesMeta').textContent = `오답 가중치 반영 · 총 ${all.length}개 풀`;
   currentPhrases = all;
   startQuizWith(pool);
@@ -1461,23 +1470,17 @@ Keep responses concise and encouraging.`;
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600, system: systemPrompt, messages: chatHistory })
     });
     const data = await res.json();
-    const reply = data.content.filter(c => c.type === 'text').map(c => c.text).join('');
+    const reply = data.content.map(c => c.text || '').join('');
     chatHistory.push({ role: 'assistant', content: reply });
     const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
     const last = bubbles[bubbles.length - 1];
-    const cleanReply = reply.replace(/💡 Correction:[\s\S]*$/m, '').trim();
+    const cleanReply = reply.replace(/💡 Correction:.*$/ms, '').trim();
     if (last) {
-      const textEl = last.querySelector('.chat-text');
-      textEl.innerHTML = '';
-      const span = document.createElement('span');
-      span.textContent = cleanReply;
-      textEl.appendChild(span);
-      const speakBtn = document.createElement('button');
-      speakBtn.style.cssText = 'display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;';
-      speakBtn.title = '읽어주기';
-      speakBtn.textContent = '🔊';
-      speakBtn.onclick = () => speak(cleanReply);
-      textEl.appendChild(speakBtn);
+      last.querySelector('.chat-text').innerHTML = `
+        ${cleanReply}
+        <button onclick="speak('${cleanReply.replace(/'/g,"&#39;").replace(/\n/g,' ')}')" 
+          style="display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;" title="읽어주기">🔊</button>`;
+      // 자동으로 읽어주기
       speak(cleanReply);
     }
     const corrMatch = reply.match(/💡 Correction:([\s\S]*?)(?=\n\n|$)/);
@@ -1738,7 +1741,7 @@ function updateCharPreview() {
   const style1 = document.querySelector('.char-chip[data-group="style1"].selected')?.dataset.val;
   const style2Vals = [...document.querySelectorAll('.char-chip[data-group="style2"].selected')].map(b => b.dataset.val);
   const goal = document.querySelector('.char-chip[data-group="goal"].selected')?.dataset.val;
-  const styleMap = { casual:'Casual', business:'Business', formal:'Formal' };
+  const styleMap = { casual:'Casual', formal:'Formal' };
   const toneMap = { plain:'담백한', concise:'간결한', friendly:'친근한', sharp:'냉철한', rich:'풍부한', vivid:'화려한' };
   const goalMap = { daily:'일상 회화', business:'비즈니스', travel:'여행', exam:'시험(OPIC)' };
   const parts = [];
@@ -1772,7 +1775,7 @@ function saveCharacter() {
 
 function getCharacterPrompt() {
   if (!character.age && !character.job && !character.style1) return '';
-  const styleMap = { casual:'일상 대화체(Casual)', business:'비즈니스 영어(Business)', formal:'격식체(Formal)' };
+  const styleMap = { casual:'일상 대화체(Casual)', formal:'격식체(Formal)' };
   const toneMap = { plain:'담백하고 꾸밈없는', concise:'간결하고 핵심적인', friendly:'친근하고 따뜻한', sharp:'냉철하고 논리적인', rich:'풍부하고 표현적인', vivid:'화려하고 생동감 있는' };
   const parts = [];
   if (character.age) parts.push(`${character.age}세`);
@@ -1784,9 +1787,9 @@ function getCharacterPrompt() {
   return parts.length ? `\n\n사용자 프로필: ${parts.join(', ')}. 이에 맞는 가장 자연스러운 표현을 우선 추천해줘.` : '';
 }
 
-// 저장용 캐릭터 라벨 — 말투 설정(style1)만 구분자로 사용
+// 저장용 캐릭터 라벨 — Casual / Formal 두 개만
 function getCharacterLabel() {
-  const styleMap = { casual:'Casual', business:'Business', formal:'Formal' };
+  const styleMap = { casual:'Casual', formal:'Formal' };
   return styleMap[character.style1] || '';
 }
 
@@ -1929,14 +1932,11 @@ function renderDashboard(allPhrases) {
   const todayD = String(today.getDate()).padStart(2, '0');
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-  // 이번 달 수업 날짜 세트 (날짜 형식: YYYY.M.D 또는 YY.M.D 모두 처리)
+  // 이번 달 수업 날짜 세트
   const studiedDates = new Set();
   db.sessions.forEach(s => {
     const p = s.date.split('.');
-    if (p.length < 3) return;
-    const y = p[0].length === 2 ? '20' + p[0] : p[0];
-    const m = String(parseInt(p[1]));
-    if (y === todayY && m === String(today.getMonth() + 1)) {
+    if (p[0] === todayY && p[1] === todayM.replace(/^0/,'')) {
       studiedDates.add(String(parseInt(p[2])));
     }
   });
@@ -2061,9 +2061,11 @@ function renderDashboard(allPhrases) {
   if (elQT) elQT.textContent = answered;
   renderDonut('quizDonut', quizPct);
 
-  // 플래시카드 통계
-  const fGot = db.flashStats?.got || 0;
-  const fTotal = db.flashStats?.total || 0;
+  // 플래시카드 통계 — 시트 데이터의 flash_count / notyet_count 합산
+  const allForFlash = db.sessions.flatMap(s => s.phrases);
+  const fGot   = allForFlash.reduce((s, p) => s + (p.flash_count  || 0), 0);
+  const fNotYet = allForFlash.reduce((s, p) => s + (p.notyet_count || 0), 0);
+  const fTotal = fGot + fNotYet;
   const fPct = fTotal > 0 ? Math.round(fGot / fTotal * 100) : 0;
   const fPctEl = document.getElementById('flashPct');
   const elFG = document.getElementById('flashGot');
@@ -2185,8 +2187,8 @@ function renderCharPanelBody() {
 
   body.innerHTML = `
     <div style="margin-bottom:12px;">
-      <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">말투 상황</div>
-      <div class="char-chips-row">${chips('style1',[['casual','Casual'],['business','Business'],['formal','Formal']])}</div>
+      <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">말투</div>
+      <div class="char-chips-row">${chips('style1',[['casual','Casual'],['formal','Formal']])}</div>
     </div>
     <div style="margin-bottom:12px;">
       <div class="char-section-title" style="font-size:11px;margin-bottom:6px;">톤 <span style="font-weight:400;color:var(--muted)">(중복 선택)</span></div>
@@ -2207,35 +2209,33 @@ function renderInputScreen() {
 let activeProfileFilter = null;
 
 function renderProfileFilter(allPhrases) {
-  const section = document.getElementById('profileFilterSection');
-  const row = document.getElementById('profileFilterRow');
-  if (!section || !row) return;
+  // 드롭다운은 항상 표시 — 값 초기화만
+  const sel = document.getElementById('profileFilterSelect');
+  if (sel && !sel.value) sel.value = '전체';
+  updateProfileFilterCount(allPhrases);
+}
 
-  // character_profile이 있는 표현만 수집
-  const profiles = [...new Set(
-    allPhrases.map(p => p.character_profile).filter(Boolean)
-  )];
-
-  if (profiles.length < 2) {
-    section.style.display = 'none';
-    return;
+function updateProfileFilterCount(allPhrases) {
+  const val = activeProfileFilter;
+  const countEl = document.getElementById('profileFilterCount');
+  if (!countEl) return;
+  if (val) {
+    const cnt = allPhrases.filter(p => p.character_profile === val).length;
+    countEl.textContent = `${cnt}개 문장`;
+    countEl.style.display = 'inline';
+  } else {
+    countEl.style.display = 'none';
   }
-  section.style.display = 'block';
-
-  const all = [{ label: '전체', val: null }, ...profiles.map(p => ({ label: p, val: p }))];
-  row.innerHTML = all.map(({ label, val }) => {
-    const isActive = activeProfileFilter === val;
-    return `<button class="cal-month-btn ${isActive ? 'active' : 'has-data'}" onclick="setProfileFilter(${val ? `'${val}'` : 'null'})">${label}</button>`;
-  }).join('');
 }
 
 function setProfileFilter(val) {
   activeProfileFilter = val;
   const allPhrases = db.sessions.flatMap(s => s.phrases);
-  renderProfileFilter(allPhrases);
-  renderTopicCounts(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
-  renderWrongList(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
-  renderRecentList(val ? allPhrases.filter(p => p.character_profile === val) : allPhrases);
+  updateProfileFilterCount(allPhrases);
+  const filtered = val ? allPhrases.filter(p => p.character_profile === val) : allPhrases;
+  renderTopicCounts(filtered);
+  renderWrongList(filtered);
+  renderRecentList(filtered);
 }
 
 function renderWrongList(allPhrases) {
@@ -2583,15 +2583,8 @@ function showHint() {
   if (typingWrap) typingWrap.style.display = 'none';
   const choicesArea = document.getElementById('choicesArea');
   choicesArea.style.display = 'block';
-  const choicesList = document.getElementById('choicesList');
-  choicesList.innerHTML = '';
-  shuffleArr([...(q.choices || generateChoices(q.answer))]).forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'choice';
-    btn.textContent = c;
-    btn.onclick = () => checkHintChoice(btn, c);
-    choicesList.appendChild(btn);
-  });
+  document.getElementById('choicesList').innerHTML = shuffleArr([...(q.choices || generateChoices(q.answer))]).map(c =>
+    `<button class="choice" onclick="checkHintChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`).join('');
   document.getElementById('qTypeLabel').textContent = '힌트 사용';
 }
 
@@ -2790,7 +2783,14 @@ async function loadSheetsData(silent) {
     data.phrases.forEach(p => {
       const date = p.date || '날짜 없음';
       if (!sessionMap[date]) sessionMap[date] = [];
-      sessionMap[date].push(p);
+      // flash_count / notyet_count 숫자 보장
+      sessionMap[date].push({
+        ...p,
+        flash_count:  Number(p.flash_count)  || 0,
+        notyet_count: Number(p.notyet_count) || 0,
+        wrong_count:  Number(p.wrong_count)  || 0,
+        review_count: Number(p.review_count) || 0,
+      });
     });
 
     // 기존 Sheets 기반 세션만 교체 (로컬 전용 세션은 유지)
@@ -2816,12 +2816,13 @@ async function loadSheetsData(silent) {
     // 최신순 정렬
     db.sessions.sort((a, b) => b.date.localeCompare(a.date));
 
-    // wrongCount도 Sheets 데이터로 동기화
+    // wrongCount, flash_count, notyet_count도 Sheets 데이터로 동기화
     data.phrases.forEach(p => {
       if (p.wrong_count && parseInt(p.wrong_count) > 0) {
         db.wrongCount[p.id] = parseInt(p.wrong_count);
       }
     });
+    // flash_count / notyet_count는 세션 phrases 안에 직접 저장됨 (위에서 처리)
 
     saveDB();
     if (!silent) { hideLoading(); renderHome(); }
@@ -2848,15 +2849,23 @@ let flashIndex = 0;
 let flashKnown = 0;
 let flashUnknown = 0;
 let flashIsFlipped = false;
+let flashRequeuedIds = [];
 
 function startFlashCards() {
-  const all = db.sessions.flatMap(s => s.phrases);
+  const allPhrases = db.sessions.flatMap(s => s.phrases);
+  const all = activeProfileFilter
+    ? allPhrases.filter(p => p.character_profile === activeProfileFilter)
+    : allPhrases;
   if (!all.length) { alert('먼저 수업을 불러오세요'); return; }
-  // 오답 많은 것 우선, 나머지 랜덤 섞기
-  flashCards = shuffleArr([...all]).sort((a, b) => (db.wrongCount[b.id] || 0) - (db.wrongCount[a.id] || 0));
+  // Not Yet(notyet_count > flash_count) 우선, 나머지는 오답 가중치
+  const notYetCards = shuffleArr(all.filter(p => (p.notyet_count||0) > (p.flash_count||0)));
+  const otherCards  = shuffleArr(all.filter(p => !((p.notyet_count||0) > (p.flash_count||0))))
+    .sort((a, b) => (db.wrongCount[b.id]||0) - (db.wrongCount[a.id]||0));
+  flashCards = [...notYetCards, ...otherCards];
   flashIndex = 0;
   flashKnown = 0;
   flashUnknown = 0;
+  flashRequeuedIds = [];
   showScreen('flashScreen');
   renderFlashCard();
 }
@@ -2906,22 +2915,36 @@ function flipCard() {
 
 function flashAnswer(known) {
   const card = flashCards[flashIndex];
+
   if (known) {
+    // ── Got it ──
     flashKnown++;
+    // 로컬 wrongCount 감소
     if ((db.wrongCount[card.id] || 0) > 0) db.wrongCount[card.id]--;
+    // 로컬 캐시 flash_count +1
+    updateLocalFlashCount(card.id, 'flash', 1);
+    // 시트 업데이트
+    syncFlashToSheets(card.id, 'got');
   } else {
+    // ── Not Yet ──
     flashUnknown++;
     db.wrongCount[card.id] = (db.wrongCount[card.id] || 0) + 1;
+    // 로컬 캐시 notyet_count +1
+    updateLocalFlashCount(card.id, 'notyet', 1);
+    // 시트 업데이트
+    syncFlashToSheets(card.id, 'notyet');
+    // 세션 내 한 번만 재큐 (맨 뒤에 추가)
+    if (!flashRequeuedIds.includes(card.id)) {
+      flashCards.push({ ...card });
+      flashRequeuedIds.push(card.id);
+    }
   }
-  // flashStats 업데이트
-  if (!db.flashStats) db.flashStats = { got: 0, total: 0 };
-  db.flashStats.total++;
-  if (known) db.flashStats.got++;
+
   saveDB();
-  syncStatsToSheets(card.id, known);
   flashIndex++;
 
-  // 10개 배치 완료
+  // 10개 배치 완료 (재큐 제외한 원본 기준)
+  const originalLen = flashCards.length - flashRequeuedIds.length;
   if (flashIndex > 0 && flashIndex % 10 === 0 && flashIndex < flashCards.length) {
     if (confirm(`${flashIndex} cards done! 🎉\nGot it ✓ ${flashKnown} · Not yet ✗ ${flashUnknown}\n\nKeep going?`)) {
       renderFlashCard();
@@ -2933,12 +2956,42 @@ function flashAnswer(known) {
 
   // 전체 완료
   if (flashIndex >= flashCards.length) {
-    alert(`All done! 🎉\n\nGot it ✓ ${flashKnown}\nNot yet ✗ ${flashUnknown}\n\nCards you missed will show up more in your quiz!`);
+    const notYetLeft = db.sessions.flatMap(s => s.phrases)
+      .filter(p => (p.notyet_count||0) > (p.flash_count||0)).length;
+    alert(`All done! 🎉\n\nGot it ✓ ${flashKnown}\nNot yet ✗ ${flashUnknown}` +
+      (notYetLeft > 0 ? `\n\nNot Yet ${notYetLeft}개, 다음 세션에 먼저 나와요` : ''));
     goHome();
     return;
   }
 
   renderFlashCard();
+}
+
+// 로컬 캐시(db.sessions) flash_count / notyet_count 즉시 반영
+function updateLocalFlashCount(phraseId, field, delta) {
+  for (const s of db.sessions) {
+    const p = s.phrases.find(x => x.id === phraseId);
+    if (p) {
+      if (field === 'flash')  p.flash_count  = (p.flash_count  || 0) + delta;
+      if (field === 'notyet') p.notyet_count = (p.notyet_count || 0) + delta;
+      break;
+    }
+  }
+}
+
+// 시트에 flash_count / notyet_count delta 전송
+async function syncFlashToSheets(phraseId, result) {
+  try {
+    const payload = {
+      action: 'updateFlash',
+      phraseId,
+      gotDelta:    result === 'got'    ? 1 : 0,
+      notyetDelta: result === 'notyet' ? 1 : 0,
+    };
+    await sheetsPost(payload);
+  } catch(e) {
+    console.warn('Flash sync failed:', e.message);
+  }
 }
 
 // ══════════════════════════════════
