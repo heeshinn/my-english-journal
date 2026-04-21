@@ -574,7 +574,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div class="topic-btn" onclick="openTopic('육아')"><span class="topic-btn-en">육아</span><span class="topic-btn-ko">발달 / 놀이 / 교육</span><span class="topic-btn-count" id="cnt-육아">0</span></div>
         <div class="topic-btn" onclick="openTopic('업무')"><span class="topic-btn-en">업무</span><span class="topic-btn-ko">직무 / 회사 / 동료</span><span class="topic-btn-count" id="cnt-업무">0</span></div>
         <div class="topic-btn" onclick="openTopic('예술')"><span class="topic-btn-en">예술</span><span class="topic-btn-ko">음악 / 미술 / 공연</span><span class="topic-btn-count" id="cnt-예술">0</span></div>
-        <div class="topic-btn" onclick="openTopic('기획')"><span class="topic-btn-en">기획</span><span class="topic-btn-ko">공간 / 컨텐츠 / 브랜딩</span><span class="topic-btn-count" id="cnt-기획">0</span></div>
+        <div class="topic-btn" onclick="openTopic('기획')"><span class="topic-btn-en">기획</span><span class="topic-btn-ko">건축 / 공간 / 컨텐츠</span><span class="topic-btn-count" id="cnt-기획">0</span></div>
         <div class="topic-btn" onclick="openTopic('웰니스')"><span class="topic-btn-en">웰니스</span><span class="topic-btn-ko">운동 / 관계 / 마인드</span><span class="topic-btn-count" id="cnt-웰니스">0</span></div>
       </div>
     </div>
@@ -678,8 +678,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div class="upload-field">
           <label class="char-label">말투 스타일</label>
           <div class="char-chips-row" style="margin-top:4px;">
-            <button class="char-chip selected" data-group="uploadTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>일상·비즈니스</small></button>
-            <button class="char-chip" data-group="uploadTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식·격식</small></button>
+            <button class="char-chip selected" data-group="uploadTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>가벼운 논의 / 대화</small></button>
+            <button class="char-chip" data-group="uploadTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식 미팅 / 보고</small></button>
           </div>
         </div>
         <div class="upload-field">
@@ -769,8 +769,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div style="margin-bottom:14px;">
           <label class="char-label">말투 스타일</label>
           <div class="char-chips-row" style="margin-top:4px;">
-            <button class="char-chip selected" data-group="linkTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>일상·비즈니스</small></button>
-            <button class="char-chip" data-group="linkTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식·격식</small></button>
+            <button class="char-chip selected" data-group="linkTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>가벼운 논의 / 대화</small></button>
+            <button class="char-chip" data-group="linkTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식 미팅 / 보고</small></button>
           </div>
         </div>
 
@@ -859,8 +859,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
         <div class="upload-field">
           <label class="char-label">말투 스타일</label>
           <div class="char-chips-row" style="margin-top:4px;">
-            <button class="char-chip selected" data-group="uploadTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>일상·비즈니스</small></button>
-            <button class="char-chip" data-group="uploadTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식·격식</small></button>
+            <button class="char-chip selected" data-group="uploadTone" data-val="Casual" onclick="selectChip(this)">Casual<br><small>가벼운 논의 / 대화</small></button>
+            <button class="char-chip" data-group="uploadTone" data-val="Formal" onclick="selectChip(this)">Formal<br><small>공식 미팅 / 보고</small></button>
           </div>
         </div>
         <div class="upload-field">
@@ -992,8 +992,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
     <div class="char-section">
       <div class="char-section-title">말투 스타일</div>
       <div class="char-chips-row">
-        <button class="char-chip" data-group="style1" data-val="casual" onclick="selectChip(this)">Casual<br><small>일상·친구·비즈니스</small></button>
-        <button class="char-chip" data-group="style1" data-val="formal" onclick="selectChip(this)">Formal<br><small>공식·발표·격식</small></button>
+        <button class="char-chip" data-group="style1" data-val="casual" onclick="selectChip(this)">Casual<br><small>가벼운 논의 / 대화</small></button>
+        <button class="char-chip" data-group="style1" data-val="formal" onclick="selectChip(this)">Formal<br><small>공식 미팅 / 보고</small></button>
       </div>
     </div>
     <div class="char-section">
@@ -1303,7 +1303,7 @@ async function processUpload() {
 - 육아: 놀이(아이 활동·야외) / 교육(학습·성장·미래) / 훈육(행동·습관·규칙)
 - 업무: 프로젝트(업무진행·협업) / 회사·동료(직장생활·조직) / 커리어(취업·성장·목표)
 - 예술: 미술(시각·디자인) / 음악(음악활동·릴리즈·아티스트) / 공연(무대·전시·퍼포먼스)
-- 기획: 공간(인테리어·건축) / 컨텐츠(영상·글·SNS) / 브랜딩(아이덴티티·마케팅·전략)
+- 기획: 건축(인테리어·공간) / 공간(디자인·환경) / 컨텐츠(영상·글·SNS)
 - 웰니스: 운동(신체활동·건강) / 관계(대인관계·감정) / 마인드셋(심리·생각·철학·꿈)
 
 문장 내용을 읽고 가장 핵심 주제로 분류할 것.`;
@@ -1335,7 +1335,7 @@ async function processUpload() {
 - 육아: 아이, 교육, 가정
 - 업무: 미팅, 커리어, 비즈니스
 - 예술: 음악, 미술, 공연, 문화
-- 기획: 공간, 컨텐츠, 브랜딩
+- 기획: 건축, 공간, 컨텐츠
 - 웰니스: 건강, 운동, 멘탈
 
 예시:
