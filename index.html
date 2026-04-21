@@ -303,6 +303,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .chat-bubble.ai .chat-text { background: var(--bg); border: 1.5px solid var(--border); border-bottom-left-radius: 4px; color: var(--ink); }
 .chat-bubble.user .chat-text { background: var(--accent); color: white; border-bottom-right-radius: 4px; transition: background .3s; }
 .chat-correction { font-size: 12px; background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: var(--rs); padding: 10px 14px; margin-top: 6px; color: #92400E; line-height: 1.6; max-width: 85%; align-self: flex-start; }
+.typing-dots { display: inline-block; letter-spacing: 2px; opacity: .6; animation: typing-blink 1.4s infinite; }
+@keyframes typing-blink { 0%, 100% { opacity: .3 } 50% { opacity: .9 } }
 .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); align-items: flex-end; background: var(--bg); }
 .chat-input { flex: 1; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--rs); font-size: 15px; font-family: "DM Sans", sans-serif; background: var(--surface); resize: none; max-height: 100px; overflow-y: auto; line-height: 1.5; color: var(--ink); }
 .chat-input:focus { outline: none; border-color: var(--accent); }
@@ -1364,12 +1366,14 @@ async function processUpload() {
 3. topic: 반드시 다음 중 하나만 → 일상 / 육아 / 업무 / 예술 / 기획 / 웰니스
 4. original: 학생이 틀리게 말한 원문 (없으면 빈 문자열 "")
 5. english: 실제 활용 예문 (설명문 X, "A means B" / "A vs B" 같은 해설 문장 X, 원어민이 실제로 쓸 법한 자연스러운 예문)
-6. expression: 핵심 영어 표현 2~5단어 (반드시 영어로만, 한국어 절대 X)
+6. expression: 핵심 영어 표현 2~5단어 (반드시 english에 그대로 등장하는 단어들만 사용, 영어로만, 한국어 절대 X)
 7. korean: expression의 한국어 뜻 (반드시 한국어로만, 영어 절대 X)
 8. difficulty: "medium" 또는 "hard"
-9. fill_sentence: english 문장에서 expression을 ___로 바꾼 문장
-10. fill_answer: expression과 동일한 값
-11. fill_choices: 정답 포함 4개 영어 보기 배열
+9. fill_sentence: ⚠️ 절대 규칙 — english 문장을 그대로 유지하면서 expression에 해당하는 부분만 ___ (언더스코어 정확히 3개)로 대체. english에 없는 단어를 추가하거나 있는 단어를 삭제 절대 금지. fill_sentence의 ___에 fill_answer를 넣으면 english와 100% 동일해야 함.
+   • expression이 english에 연속으로 나타나면 → ___ 1개로 대체
+   • expression 단어들이 떨어져 있으면 (예: "identified a challenge"가 "You've identified a really important challenge"에 있을 때) → 의미있는 단어 각각을 별도 ___로 대체. 예: "You've ___ a really important ___."
+10. fill_answer: fill_sentence의 ___ 위치에 들어갈 정답. 빈칸 1개면 단일 문자열 ("rose-tinted glasses"), 빈칸 여러개면 순서대로 │ 구분자로 연결 ("identified│challenge")
+11. fill_choices: 정답 포함 4개 영어 보기 배열 (빈칸이 여러개면 첫 빈칸 기준 보기)
 12. ko_sentence: 한국어로 된 퀴즈 문장
 
 주제 분류 참고:
@@ -1552,34 +1556,69 @@ When correcting mistakes, ALWAYS provide the correction in this style. For examp
   const systemPrompt = `You are a friendly English conversation tutor.${profileCtx ? ` User profile: ${profileCtx}.` : ''}
 ${styleGuide}
 
+⚠️ IMPORTANT response format:
+- Keep each reply SHORT — 1-3 sentences maximum per paragraph
+- If you have more to say, split into multiple short paragraphs separated by blank lines (\\n\\n)
+- Each paragraph will display as a separate chat bubble, so make each paragraph feel complete on its own
+- Prefer 2-3 short paragraphs over 1 long one
+
 Have a natural conversation in English. When the user makes grammar or expression mistakes, gently correct them AFTER responding naturally.
 Format corrections like: 💡 Correction: "[wrong]" → "[correct]" (brief Korean explanation of why, and how the style applies)
-Keep responses concise and encouraging.`;
+Keep it concise and encouraging.
+
+⚠️ Always end your reply with a related follow-up question to keep the conversation flowing. The question should be:
+- Directly connected to what the user just said (pick up on a specific detail, feeling, or idea they mentioned)
+- Open-ended (not yes/no) so the user has something to elaborate on
+- Natural and curious in tone — like a friend who's genuinely interested, not an interviewer
+- Placed as the last sentence of your last paragraph (so it appears in the final bubble)`;
+
+  // 로딩 표시 버블
+  appendChatBubble('ai', '<span class="typing-dots">···</span>');
 
   try {
-    appendChatBubble('ai', '...');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600, system: systemPrompt, messages: chatHistory })
     });
-    const data = await res.json();
-    const reply = data.content.map(c => c.text || '').join('');
-    chatHistory.push({ role: 'assistant', content: reply });
-    const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
-    const last = bubbles[bubbles.length - 1];
 
-    // 💡 Correction 부분만 분리, 나머지는 말풍선에 표시
+    // ★ NEW: HTTP 에러 명시적 처리
+    if (!res.ok) {
+      let errMsg = `API 오류 (${res.status})`;
+      try { const err = await res.json(); errMsg += ': ' + (err.error?.message || JSON.stringify(err).slice(0,200)); } catch(_){}
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+    const reply = (data.content || []).map(c => c.text || '').join('').trim();
+    if (!reply) throw new Error('응답이 비어있어요. API Key나 네트워크를 확인해주세요.');
+
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    // 💡 Correction 분리 (별도 노란 박스로)
     const corrMatch = reply.match(/💡\s*Correction:([\s\S]*?)(?=\n\n💡|\n💡|$)/);
     const cleanReply = reply.replace(/\n*💡\s*Correction:[\s\S]*$/, '').trim();
 
-    if (last) {
-      const safeHtml = cleanReply.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-      last.querySelector('.chat-text').innerHTML = `${safeHtml}
-        <button onclick="speak('${cleanReply.replace(/'/g,"&#39;").replace(/\n/g,' ')}')"
-          style="display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;" title="읽어주기">🔊</button>`;
-      speak(cleanReply);
+    // ★ NEW: 응답을 여러 말풍선으로 쪼개기 (문단 단위)
+    const chunks = splitReplyToBubbles(cleanReply);
+
+    // 로딩 버블 제거
+    const loadingBubble = document.querySelector('#chatMessages .chat-bubble.ai:last-child');
+    if (loadingBubble) loadingBubble.remove();
+
+    // 각 chunk를 별도 말풍선으로 — 자연스러운 텀 주기
+    for (let i = 0; i < chunks.length; i++) {
+      appendChatBubble('ai', renderBubbleContent(chunks[i], i === chunks.length - 1 ? cleanReply : null));
+      if (i < chunks.length - 1) {
+        // 다음 버블 전에 짧은 딜레이 (자연스러운 타이핑 느낌)
+        await new Promise(r => setTimeout(r, 250));
+      }
     }
+
+    // 전체 응답을 TTS로 읽기
+    speak(cleanReply);
+
+    // Correction 박스
     if (corrMatch) {
       const corrDiv = document.createElement('div');
       corrDiv.className = 'chat-correction';
@@ -1588,10 +1627,66 @@ Keep responses concise and encouraging.`;
     }
     scrollChat();
   } catch(e) {
-    const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
-    const last = bubbles[bubbles.length - 1];
-    if (last) last.querySelector('.chat-text').textContent = '오류가 발생했어요. 다시 시도해주세요.';
+    console.error('[sendChat error]', e);
+    const loadingBubble = document.querySelector('#chatMessages .chat-bubble.ai:last-child');
+    if (loadingBubble) loadingBubble.querySelector('.chat-text').textContent = '⚠️ ' + (e.message || '오류가 발생했어요. 다시 시도해주세요.');
+    // 실패한 turn은 히스토리에서 제거 — 다음 요청이 꼬이지 않도록
+    if (chatHistory[chatHistory.length - 1]?.role === 'user') {
+      // user 메시지는 남겨두되, 실패 표시만 함
+    }
   }
+}
+
+// ★ NEW: AI 응답을 자연스러운 말풍선 단위로 쪼갬
+function splitReplyToBubbles(text) {
+  if (!text) return [];
+  // 1차: 문단(\n\n) 단위
+  let chunks = text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean);
+
+  // 너무 긴 문단은 문장 단위로 추가 분할 (200자 이상)
+  const result = [];
+  for (const c of chunks) {
+    if (c.length <= 200) {
+      result.push(c);
+      continue;
+    }
+    // 문장 경계에서 분할 (. ! ? 뒤에 공백)
+    const sentences = c.match(/[^.!?\n]+[.!?]+(?:\s|$)|[^.!?\n]+$/g) || [c];
+    let buffer = '';
+    for (const s of sentences) {
+      if ((buffer + s).length > 180 && buffer) {
+        result.push(buffer.trim());
+        buffer = s;
+      } else {
+        buffer += s;
+      }
+    }
+    if (buffer.trim()) result.push(buffer.trim());
+  }
+  // 안전장치: 결과가 없으면 원문 그대로
+  return result.length ? result : [text];
+}
+
+// ★ NEW: 말풍선 HTML 렌더 — 마지막 버블에만 speak 버튼
+function renderBubbleContent(text, fullTextForSpeak) {
+  const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  if (fullTextForSpeak !== null && fullTextForSpeak !== undefined) {
+    // speak 버튼은 data attribute로 안전하게 전달 (onclick 이스케이프 문제 해결)
+    const encoded = encodeURIComponent(fullTextForSpeak);
+    return `${safe} <button class="speak-btn-inline" data-tts="${encoded}" style="background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;" title="읽어주기">🔊</button>`;
+  }
+  return safe;
+}
+
+// ★ NEW: speak 버튼 이벤트 위임 (한 번만 바인딩)
+if (!window._speakBtnBound) {
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.speak-btn-inline');
+    if (btn && btn.dataset.tts) {
+      try { speak(decodeURIComponent(btn.dataset.tts)); } catch(_) {}
+    }
+  });
+  window._speakBtnBound = true;
 }
 
 function appendChatBubble(role, text) {
@@ -1621,11 +1716,11 @@ async function saveChatToReview() {
 3. topic: 일상 / 육아 / 업무 / 예술 / 기획 / 웰니스 중 하나만
 4. original: 학생이 틀리게 말한 원문 (없으면 "")
 5. english: 실제 활용 예문 (설명문 X, 원어민이 실제로 쓰는 자연스러운 문장)
-6. expression: 핵심 영어 표현 2~5단어 (영어로만)
+6. expression: 핵심 영어 표현 2~5단어 (english에 그대로 등장하는 단어들만, 영어로만)
 7. korean: expression의 한국어 뜻 (한국어로만)
 8. difficulty: "medium" 또는 "hard"
-9. fill_sentence: english에서 expression을 ___로 바꾼 문장
-10. fill_answer: expression과 동일
+9. fill_sentence: ⚠️ english 그대로 유지 + expression 부분만 ___(정확히 언더스코어 3개)로 대체. 추가/삭제 금지. 단어가 떨어져 있으면 각각 ___로 (예: "You've ___ a really important ___.")
+10. fill_answer: 빈칸 1개면 단일 문자열, 여러개면 │로 연결 ("identified│challenge")
 11. fill_choices: 정답 포함 4개 영어 보기 배열
 
 예시:
@@ -1702,7 +1797,13 @@ async function analyzeDirectText() {
 
 JSON 배열만 반환. 다른 텍스트 없이.
 
-필드: id("${datePrefix}_lk_001" 형식), type(correction/expression/vocab), topic(일상/육아/업무/예술/기획/웰니스), original, english(본문 실제 문장), expression, korean, difficulty(medium/hard), fill_sentence, fill_answer, fill_choices(4개 배열)
+필드: id("${datePrefix}_lk_001" 형식), type(correction/expression/vocab), topic(일상/육아/업무/예술/기획/웰니스), original, english(본문 실제 문장 그대로), expression(english에 그대로 등장하는 2~5단어), korean, difficulty(medium/hard), fill_sentence, fill_answer, fill_choices(4개 배열)
+
+⚠️ fill_sentence 절대 규칙:
+- english 문장을 그대로 유지하면서 expression 부분만 ___(언더스코어 3개)로 대체
+- english에 없는 단어 추가 금지, 있는 단어 삭제 금지 (expression 대체 부분 제외)
+- 단어가 떨어져 있으면 각각 ___로 처리 (예: english="You've identified a really important challenge." → fill_sentence="You've ___ a really important ___.", fill_answer="identified│challenge")
+- 빈칸 여러개면 fill_answer에 │ 구분자로 순서대로 연결
 
 텍스트:
 ${text.slice(0, 8000)}`;
@@ -1801,11 +1902,12 @@ async function fetchAndExtract() {
 3. topic: 일상 / 육아 / 업무 / 예술 / 기획 / 웰니스 중 하나만
 4. original: 없으면 ""
 5. english: 본문에서 나온 실제 예문 (그대로 또는 자연스럽게 다듬은 문장, 절대 새로 만들지 말 것)
-6. expression: 핵심 영어 표현 2~5단어 (영어로만)
+6. expression: 핵심 영어 표현 2~5단어 (english에 그대로 등장하는 단어들만, 영어로만)
 7. korean: expression의 한국어 뜻 (한국어로만)
 8. difficulty: "medium" 또는 "hard"
-9. fill_sentence: english에서 expression을 ___로 바꾼 문장
-10. fill_answer: expression과 동일
+9. fill_sentence: ⚠️ english 그대로 유지 + expression 부분만 ___(언더스코어 3개)로 대체. 추가/삭제 금지. 단어가 떨어져 있으면 각각 ___로.
+   예) english="You've identified a really important challenge." → fill_sentence="You've ___ a really important ___.", fill_answer="identified│challenge"
+10. fill_answer: 빈칸 1개면 단일 문자열, 여러개면 │ 구분자로 순서대로 ("identified│challenge")
 11. fill_choices: 정답 포함 4개 영어 보기 배열
 
 컨텐츠 본문:
@@ -1878,7 +1980,12 @@ async function extractFromDirectText(urlEnc, typeLabelEnc, topicHintEnc, linkTon
 
 JSON 배열만 반환. 다른 텍스트 없이.
 
-필드: id("${datePrefix}_lk_001"형식), type, topic(일상/육아/업무/예술/기획/웰니스), original, english(본문 실제 문장), expression, korean, difficulty, fill_sentence, fill_answer, fill_choices(4개 배열)
+필드: id("${datePrefix}_lk_001"형식), type, topic(일상/육아/업무/예술/기획/웰니스), original, english(본문 실제 문장 그대로), expression(english에 등장하는 2~5단어), korean, difficulty, fill_sentence, fill_answer, fill_choices(4개 배열)
+
+⚠️ fill_sentence 절대 규칙:
+- english 그대로 유지 + expression 부분만 ___(언더스코어 3개)로 대체. 추가/삭제 금지.
+- 단어가 떨어져 있으면 각각 ___로. 예: "You've ___ a really important ___.", fill_answer="identified│challenge"
+- 빈칸 여러개면 fill_answer에 │ 구분자로 순서대로 연결
 
 텍스트:
 ${text.slice(0, 8000)}`;
@@ -2800,19 +2907,34 @@ function startQuizWith(phrases) {
 
 function buildQuizItem(p) {
   // flat 구조 (신규) 또는 nested quiz 구조 (구버전) 모두 지원
-  const answer = p.fill_answer || p.expression_quiz || p.quiz?.fill_answer || p.expression || '';
-  const sentence = p.fill_sentence || p.quiz?.fill_sentence ||
-    (p.english && answer ? p.english.replace(new RegExp(answer.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'), '___') : null) ||
-    p.english || '';
-  const choices = (p.fill_choices?.length >= 4) ? p.fill_choices :
-    (p.quiz?.fill_choices?.length >= 4) ? p.quiz.fill_choices :
-    generateChoices(answer);
+  let answer = p.fill_answer || p.expression_quiz || p.quiz?.fill_answer || p.expression || '';
+  // Multi-blank: │로 구분된 문자열이면 배열로 (원형은 그대로 유지)
+  const firstAnswer = Array.isArray(answer) ? answer[0] : String(answer).split('│')[0];
+
+  let sentence = p.fill_sentence || p.quiz?.fill_sentence || '';
+  if (!sentence && p.english && firstAnswer) {
+    sentence = p.english.replace(new RegExp(firstAnswer.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'), '___');
+  }
+  if (!sentence) sentence = p.english || '';
+
+  // fill_choices: │ 또는 , 구분자 모두 지원
+  let choices;
+  const rawChoices = p.fill_choices || p.quiz?.fill_choices;
+  if (Array.isArray(rawChoices) && rawChoices.length >= 4) choices = rawChoices;
+  else if (typeof rawChoices === 'string' && rawChoices) {
+    const sep = rawChoices.indexOf('│') >= 0 ? '│' : (rawChoices.indexOf('|') >= 0 ? '|' : ',');
+    const arr = rawChoices.split(sep).map(s => s.trim()).filter(Boolean);
+    choices = arr.length >= 4 ? arr : generateChoices(firstAnswer);
+  } else {
+    choices = generateChoices(firstAnswer);
+  }
+
   return {
     type: 'typing',
     phraseId: p.id,
     q: sentence,
     sub: p.korean || '',
-    answer,
+    answer,  // 원형 (string with │ or array) 그대로 전달
     choices,
     explain: p.english
   };
@@ -2835,15 +2957,27 @@ function speak(text, lang = 'en-US') {
 }
 
 function makeInlineSentence(sentence, answer) {
-  const initWidth = Math.max(answer.length * 11, 80) + 'px';
-  const normalized = sentence
+  const normalized = String(sentence)
     .replace(/-{2,}/g, '___')
     .replace(/_{2,}/g, '___');
   const parts = normalized.split('___');
-  const before = parts[0] || '';
-  const after = parts.slice(1).join('').replace(/^[\s_\-]+/, '') || '';
-  return `<span class="quiz-inline-wrap">${before}<input id="typingIn" class="quiz-inline-input" style="width:${initWidth}" placeholder="..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-    oninput="this.style.width=Math.max(this.value.length*12+40,80)+'px'"/>${after}</span>`;
+  const blanks = parts.length - 1;
+  // answer가 │ 구분자 문자열 또는 배열
+  const answerArr = Array.isArray(answer) ? answer.map(String) : String(answer).split('│');
+
+  let html = '<span class="quiz-inline-wrap">';
+  const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  for (let i = 0; i < parts.length; i++) {
+    html += escape(parts[i]);
+    if (i < blanks) {
+      const ansForSlot = answerArr[i] || answerArr[0] || '';
+      const initWidth = Math.max(ansForSlot.length * 11, 80) + 'px';
+      const id = blanks === 1 ? 'typingIn' : `typingIn_${i}`;
+      html += `<input id="${id}" data-slot="${i}" class="quiz-inline-input typingIn" style="width:${initWidth}" placeholder="..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.style.width=Math.max(this.value.length*12+40,80)+'px'"/>`;
+    }
+  }
+  html += '</span>';
+  return html;
 }
 
 function renderQ() {
@@ -2873,11 +3007,14 @@ function renderQ() {
       <div class="choices-wrap" id="choicesList"></div>
     </div>`;
 
-  const inp = document.getElementById('typingIn');
+  const inp = document.getElementById('typingIn') || document.querySelector('.typingIn');
   if (inp) {
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkTyping(); });
-    inp.addEventListener('input', () => {
-      inp.style.width = Math.max(inp.value.length * 11, 80) + 'px';
+    // 다중 입력창 모두에 이벤트 바인딩
+    document.querySelectorAll('.typingIn').forEach(el => {
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') checkTyping(); });
+      el.addEventListener('input', () => {
+        el.style.width = Math.max(el.value.length * 11, 80) + 'px';
+      });
     });
     setTimeout(() => inp.focus(), 50);
   }
@@ -2889,7 +3026,9 @@ function showHint() {
   if (typingWrap) typingWrap.style.display = 'none';
   const choicesArea = document.getElementById('choicesArea');
   choicesArea.style.display = 'block';
-  document.getElementById('choicesList').innerHTML = shuffleArr([...(q.choices || generateChoices(q.answer))]).map(c =>
+  // 힌트 보기: 첫 번째 정답 기준
+  const firstAns = Array.isArray(q.answer) ? q.answer[0] : String(q.answer).split('│')[0];
+  document.getElementById('choicesList').innerHTML = shuffleArr([...(q.choices || generateChoices(firstAns))]).map(c =>
     `<button class="choice" onclick="checkHintChoice(this,'${c.replace(/'/g,"&#39;")}')">${c}</button>`).join('');
   document.getElementById('qTypeLabel').textContent = '힌트 사용';
 }
@@ -2897,49 +3036,75 @@ function showHint() {
 function checkHintChoice(btn, chosen) {
   const q = quizItems[currentQ];
   document.querySelectorAll('#choicesList .choice').forEach(b => b.disabled = true);
-  const correct = normalizeAns(chosen) === normalizeAns(q.answer);
+  // 힌트는 첫 번째 빈칸의 정답 기준으로 판정 (multi-blank는 힌트 대신 직접 풀기 권장)
+  const answerArr = Array.isArray(q.answer) ? q.answer.map(String) : String(q.answer).split('│');
+  const firstAns = answerArr[0] || '';
+  const correct = normalizeAns(chosen) === normalizeAns(firstAns);
   btn.className = 'choice ' + (correct ? 'correct' : 'wrong');
   if (!correct) document.querySelectorAll('#choicesList .choice').forEach(b => {
-    if (normalizeAns(b.textContent.trim()) === normalizeAns(q.answer)) b.className = 'choice reveal';
+    if (normalizeAns(b.textContent.trim()) === normalizeAns(firstAns)) b.className = 'choice reveal';
   });
-  // 힌트 사용 시 정답이면 0.5점, 오답이면 0점
   recordResult(q.phraseId, correct, q.q);
   if (correct) {
     quizScore += 0.5;
     if (q.explain) setTimeout(() => speak(q.explain), 300);
   }
   document.getElementById('qScoreLive').textContent = `${quizScore}점`;
-  // 확인 버튼 비활성화 (중복 채점 방지)
   const actionRow = document.querySelector('.quiz-action-row');
   if (actionRow) actionRow.style.display = 'none';
-  showFeedback(correct, q.answer, q.explain);
+  const displayAnswer = answerArr.length > 1 ? answerArr.join(' / ') : firstAns;
+  showFeedback(correct, displayAnswer, q.explain);
 }
 
 function checkTyping() {
   const q = quizItems[currentQ];
-  const inp = document.getElementById('typingIn');
-  if (!inp) return;
-  const val = inp.value.trim();
-  if (!val) return;
-  const n_val = normalizeAns(val);
-  const n_ans = normalizeAns(q.answer);
-  // 정답 판정:
-  // 1) 완전 일치
-  // 2) 입력이 정답을 포함 (capture their attention → capture attention 포함 ✓)
-  // 3) 정답 단어가 모두 입력에 포함 (단, 입력이 정답 단어 수 이상일 때만)
-  const ansWords = n_ans.split(/\s+/);
-  const valWords = n_val.split(/\s+/);
-  const allAnsWordsInVal = ansWords.every(w => valWords.includes(w));
-  const correct = n_val === n_ans
-    || n_val.includes(n_ans)                          // val이 answer 전체를 포함
-    || (allAnsWordsInVal && valWords.length >= ansWords.length); // answer의 모든 단어가 val에 있고, 단어 수도 충분
-  inp.className = 'quiz-inline-input ' + (correct ? 'correct' : 'wrong');
-  inp.disabled = true;
+  // 다중 입력창 처리
+  const inputs = Array.from(document.querySelectorAll('.typingIn'));
+  if (!inputs.length) return;
+  const vals = inputs.map(i => i.value.trim());
+  if (vals.some(v => !v)) return;  // 빈칸이 하나라도 비어있으면 채점 안 함
+
+  const answerArr = Array.isArray(q.answer) ? q.answer.map(String) : String(q.answer).split('│');
+  const isMulti = inputs.length > 1 || answerArr.length > 1;
+
+  let correct;
+  if (isMulti) {
+    // 각 입력창이 해당 정답과 일치하는지
+    correct = inputs.every((inp, i) => {
+      const n_val = normalizeAns(inp.value.trim());
+      const n_ans = normalizeAns(answerArr[i] || '');
+      return n_val === n_ans || (n_ans && n_val.includes(n_ans));
+    });
+    // 각 입력창에 색상 적용
+    inputs.forEach((inp, i) => {
+      const n_val = normalizeAns(inp.value.trim());
+      const n_ans = normalizeAns(answerArr[i] || '');
+      const slotCorrect = n_val === n_ans || (n_ans && n_val.includes(n_ans));
+      inp.className = 'quiz-inline-input typingIn ' + (slotCorrect ? 'correct' : 'wrong');
+      inp.disabled = true;
+    });
+  } else {
+    // 단일 입력창 - 기존 관대한 채점 로직 유지
+    const inp = inputs[0];
+    const val = inp.value.trim();
+    const n_val = normalizeAns(val);
+    const n_ans = normalizeAns(String(q.answer));
+    const ansWords = n_ans.split(/\s+/);
+    const valWords = n_val.split(/\s+/);
+    const allAnsWordsInVal = ansWords.every(w => valWords.includes(w));
+    correct = n_val === n_ans
+      || n_val.includes(n_ans)
+      || (allAnsWordsInVal && valWords.length >= ansWords.length);
+    inp.className = 'quiz-inline-input typingIn ' + (correct ? 'correct' : 'wrong');
+    inp.disabled = true;
+  }
+
   document.querySelector('.quiz-action-row').style.display = 'none';
   recordResult(q.phraseId, correct, q.q);
-  // 정답이면 전체 문장 읽어주기
   if (correct && q.explain) setTimeout(() => speak(q.explain), 300);
-  showFeedback(correct, q.answer, q.explain);
+  // 피드백에는 전체 정답을 조합해서 보여주기
+  const displayAnswer = isMulti ? answerArr.join(' / ') : String(q.answer).replace(/│/g, ' / ');
+  showFeedback(correct, displayAnswer, q.explain);
 }
 
 function normalizeAns(s) { return (s || '').toLowerCase().replace(/[^a-z0-9\s']/g,'').trim(); }
@@ -2974,15 +3139,15 @@ function showFeedback(correct, answer, explain) {
   document.getElementById('feedbackAns').textContent = fullSentence;
   document.getElementById('feedbackNote').textContent = correct ? '✓ 정답이에요!' : (answer !== explain ? answer : '');
 
-  // 인라인 입력창 색상 — 정답: 보라, 오답: 회색
-  const inp = document.getElementById('typingIn');
-  if (inp) {
+  // 인라인 입력창 색상 — 다중 입력창 모두에 적용
+  document.querySelectorAll('.typingIn').forEach(inp => {
     if (correct) {
       inp.style.cssText += ';background:var(--accent-light)!important;border-color:var(--accent)!important;color:var(--accent)!important;';
-    } else {
+    } else if (!inp.classList.contains('correct')) {
+      // 다중 입력창: 정답 처리된 칸은 그대로, 오답 칸만 회색
       inp.style.cssText += ';background:var(--surface)!important;border-color:var(--border)!important;color:var(--muted)!important;';
     }
-  }
+  });
   document.getElementById('nextQBtn').className = 'btn-next-q show';
 }
 
@@ -3012,7 +3177,7 @@ function retryQuiz() {
 // ══════════════════════════════════
 // GOOGLE SHEETS — 단일 소스 구조
 // ══════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxA0jBhe333V_RGZg83ZS94sY_EFJL_OKdOQs-DUqvmwO9pHWXfnVDUOA3bp2ztjBP-/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwUzGEm3AN4Rs7HKCWZ_SWoE3aXmsq-JY3Vwu-_0MpHVHfFrtZWUnK4lhY1jS6shwwm/exec';
 
 async function sheetsPost(payload) {
   const res = await fetch(SHEETS_URL, {
@@ -3028,6 +3193,7 @@ async function syncToSheets(phrases, date, source, explicitTone) {
   try {
     const isKorean = s => s && typeof s === 'string' && /[가-힣]/.test(s);
     const isDifficulty = s => s === 'medium' || s === 'hard' || s === 'easy';
+    const normalizeCmp = s => String(s || '').toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
 
     const cleaned = phrases.map(p => {
       let english = p.english || '';
@@ -3035,7 +3201,7 @@ async function syncToSheets(phrases, date, source, explicitTone) {
       let korean = p.korean || '';
       let difficulty = p.difficulty || 'medium';
       let fill_sentence = p.fill_sentence || '';
-      let fill_answer = p.fill_answer || p.expression || '';
+      let fill_answer = Array.isArray(p.fill_answer) ? p.fill_answer.join('│') : (p.fill_answer || p.expression || '');
       let fill_choices = p.fill_choices || [];
 
       // expression에 한국어 들어온 경우 복구
@@ -3051,16 +3217,92 @@ async function syncToSheets(phrases, date, source, explicitTone) {
       }
       if (!isDifficulty(String(difficulty))) difficulty = 'medium';
 
+      // ★ NEW: 언더스코어 개수 정규화 (_____ → ___)
+      fill_sentence = String(fill_sentence).replace(/[_\-]{2,}/g, '___');
+
+      // ★ NEW: fill_sentence 무결성 검증 + 자동 복구
+      if (fill_sentence && fill_answer && english) {
+        const blanks = (fill_sentence.match(/___/g) || []).length;
+        const answerParts = String(fill_answer).split('│');
+        let reconstructed = fill_sentence;
+        if (blanks === answerParts.length && blanks > 0) {
+          answerParts.forEach(a => { reconstructed = reconstructed.replace('___', a); });
+        } else {
+          reconstructed = fill_sentence.replace(/___/g, String(fill_answer));
+        }
+
+        if (normalizeCmp(reconstructed) !== normalizeCmp(english)) {
+          // 자동 복구: fill_answer가 english에 연속으로 있는지
+          const idx = english.toLowerCase().indexOf(String(fill_answer).toLowerCase());
+          if (idx >= 0) {
+            fill_sentence = english.slice(0, idx) + '___' + english.slice(idx + String(fill_answer).length);
+            console.warn(`[fill_sentence 자동복구] ${p.id}: english 기반으로 재생성`);
+          } else {
+            // fill_answer도 english에 없음 — multi-blank 가능성 체크
+            const expr_words = String(expression).match(/[A-Za-z']+/g) || [];
+            const stopwords = new Set(['a','an','the','to','of','in','on','at','is','are','was','were','be','been','have','has','had','and','or','but','if','so','as','by','for','with','from','it','we','you','i','they','he','she']);
+            let cursor = 0;
+            const positions = [];
+            let allFound = true;
+            for (const w of expr_words) {
+              const re = new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'i');
+              const slice = english.slice(cursor);
+              const m = slice.match(re);
+              if (!m) { allFound = false; break; }
+              const s = cursor + slice.indexOf(m[0]);
+              positions.push({ s: s, e: s + m[0].length, w: m[0] });
+              cursor = s + m[0].length;
+            }
+            if (allFound && positions.length) {
+              const meaningful = positions.filter(p2 => !stopwords.has(p2.w.toLowerCase()));
+              if (meaningful.length >= 2) {
+                let result = ''; let last = 0; const ansArr = [];
+                for (const pos of meaningful) {
+                  result += english.slice(last, pos.s) + '___';
+                  ansArr.push(english.slice(pos.s, pos.e));
+                  last = pos.e;
+                }
+                result += english.slice(last);
+                fill_sentence = result;
+                fill_answer = ansArr.join('│');
+                console.warn(`[multi-blank 자동복구] ${p.id}`);
+              } else if (meaningful.length === 1) {
+                const pos = meaningful[0];
+                fill_sentence = english.slice(0, pos.s) + '___' + english.slice(pos.e);
+                fill_answer = english.slice(pos.s, pos.e);
+                console.warn(`[single-blank 자동복구] ${p.id}`);
+              } else {
+                console.warn(`[fill_sentence 복구 실패] ${p.id}`);
+                fill_sentence = english; // 안전한 fallback
+              }
+            } else {
+              console.warn(`[fill_sentence 복구 실패] ${p.id}`);
+              fill_sentence = english;
+            }
+          }
+        }
+      }
+
       // fill_sentence 없으면 english에서 자동 생성
       if (!fill_sentence && english && expression) {
         fill_sentence = english.replace(new RegExp(expression.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'), '___');
       }
 
+      // ★ NEW: fill_choices를 │ 구분자 문자열로 정규화 (배열/CSV 혼재 모두 처리)
+      let choicesArr = [];
+      if (Array.isArray(fill_choices)) choicesArr = fill_choices;
+      else if (typeof fill_choices === 'string') {
+        if (fill_choices.indexOf('│') >= 0) choicesArr = fill_choices.split('│');
+        else if (fill_choices.indexOf('|') >= 0) choicesArr = fill_choices.split('|');
+        else choicesArr = fill_choices.split(',');
+      }
+      choicesArr = choicesArr.map(s => String(s).trim()).filter(Boolean);
+
       return {
         ...p,
         english, expression, korean, difficulty,
         fill_sentence, fill_answer: fill_answer || expression,
-        fill_choices: Array.isArray(fill_choices) ? fill_choices : [],
+        fill_choices: choicesArr,  // GAS에서 │로 join
         expression_quiz: p.expression_quiz || fill_answer || expression,
         character_profile: explicitTone || '',
         date, source: source || 'upload'
