@@ -1568,20 +1568,22 @@ Keep responses concise and encouraging.`;
     chatHistory.push({ role: 'assistant', content: reply });
     const bubbles = document.querySelectorAll('#chatMessages .chat-bubble.ai');
     const last = bubbles[bubbles.length - 1];
-    const cleanReply = reply.replace(/💡 Correction:.*$/ms, '').trim();
+
+    // 💡 Correction 부분만 분리, 나머지는 말풍선에 표시
+    const corrMatch = reply.match(/💡\s*Correction:([\s\S]*?)(?=\n\n💡|\n💡|$)/);
+    const cleanReply = reply.replace(/\n*💡\s*Correction:[\s\S]*$/, '').trim();
+
     if (last) {
-      last.querySelector('.chat-text').innerHTML = `
-        ${cleanReply}
-        <button onclick="speak('${cleanReply.replace(/'/g,"&#39;").replace(/\n/g,' ')}')" 
+      const safeHtml = cleanReply.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      last.querySelector('.chat-text').innerHTML = `${safeHtml}
+        <button onclick="speak('${cleanReply.replace(/'/g,"&#39;").replace(/\n/g,' ')}')"
           style="display:inline-block;background:none;border:none;cursor:pointer;font-size:14px;margin-left:6px;opacity:.5;vertical-align:middle;" title="읽어주기">🔊</button>`;
-      // 자동으로 읽어주기
       speak(cleanReply);
     }
-    const corrMatch = reply.match(/💡 Correction:([\s\S]*?)(?=\n\n|$)/);
     if (corrMatch) {
       const corrDiv = document.createElement('div');
       corrDiv.className = 'chat-correction';
-      corrDiv.textContent = '💡' + corrMatch[1].trim();
+      corrDiv.textContent = '💡 Correction: ' + corrMatch[1].trim();
       document.getElementById('chatMessages').appendChild(corrDiv);
     }
     scrollChat();
@@ -3098,13 +3100,21 @@ async function loadSheetsData(silent) {
     data.phrases.forEach(p => {
       const date = p.date || '날짜 없음';
       if (!sessionMap[date]) sessionMap[date] = [];
-      // flash_count / notyet_count 숫자 보장
+      // flash_count / notyet_count 숫자 보장, fill_choices 배열 보장
+      const rawChoices = p.fill_choices;
+      let parsedChoices = [];
+      if (Array.isArray(rawChoices) && rawChoices.length >= 4) {
+        parsedChoices = rawChoices;
+      } else if (typeof rawChoices === 'string' && rawChoices.includes('|')) {
+        parsedChoices = rawChoices.split('|').map(s => s.trim()).filter(Boolean);
+      }
       sessionMap[date].push({
         ...p,
-        flash_count:  Number(p.flash_count)  || 0,
-        notyet_count: Number(p.notyet_count) || 0,
-        wrong_count:  Number(p.wrong_count)  || 0,
-        review_count: Number(p.review_count) || 0,
+        fill_choices:  parsedChoices,
+        flash_count:   Number(p.flash_count)  || 0,
+        notyet_count:  Number(p.notyet_count) || 0,
+        wrong_count:   Number(p.wrong_count)  || 0,
+        review_count:  Number(p.review_count) || 0,
       });
     });
 
