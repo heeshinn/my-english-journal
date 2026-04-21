@@ -173,8 +173,8 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .quiz-body { padding: 24px var(--side); }
 .quiz-type-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 .quiz-q { font-family: "DM Sans", sans-serif; font-size: 20px; line-height: 1.8; color: var(--ink); margin-bottom: 8px; }
-.quiz-inline-wrap { display: inline; font-size: 20px; font-weight: 600; line-height: 1.8; }
-.quiz-inline-input { display: inline-block; border: none; border-bottom: 2.5px solid var(--accent); background: var(--accent-light); border-radius: 6px; padding: 2px 10px; font-size: 18px; font-family: "DM Sans", sans-serif; font-weight: 600; color: var(--accent); min-width: 80px; width: auto; text-align: center; outline: none; transition: all .2s; vertical-align: middle; }
+.quiz-inline-wrap { display: inline; font-size: 20px; font-weight: 600; line-height: 2.2; word-break: break-word; }
+.quiz-inline-input { display: inline-block; border: none; border-bottom: 2.5px solid var(--accent); background: var(--accent-light); border-radius: 6px; padding: 2px 10px; font-size: 18px; font-family: "DM Sans", sans-serif; font-weight: 600; color: var(--accent); min-width: 80px; max-width: 100%; width: auto; text-align: center; outline: none; transition: border-color .2s, background .2s; vertical-align: middle; box-sizing: border-box; }
 .quiz-inline-input:focus { background: var(--accent-light); border-bottom-color: var(--accent); }
 .quiz-inline-input.correct { background: var(--green-light); border-bottom-color: var(--green); color: #166534; }
 .quiz-inline-input.wrong { background: var(--red-light); border-bottom-color: var(--red); color: var(--red); }
@@ -2835,15 +2835,15 @@ function speak(text, lang = 'en-US') {
 }
 
 function makeInlineSentence(sentence, answer) {
-  const inputWidth = Math.max(answer.length * 11, 80) + 'px';
-  // ___ / __ / --- / -- 등 모든 블랭크 패턴 처리
+  const initWidth = Math.max(answer.length * 11, 80) + 'px';
   const normalized = sentence
-    .replace(/-{2,}/g, '___')   // --- → ___
-    .replace(/_{2,}/g, '___');  // ____ → ___
+    .replace(/-{2,}/g, '___')
+    .replace(/_{2,}/g, '___');
   const parts = normalized.split('___');
   const before = parts[0] || '';
   const after = parts.slice(1).join('').replace(/^[\s_\-]+/, '') || '';
-  return `<span class="quiz-inline-wrap">${before}<input id="typingIn" class="quiz-inline-input" style="width:${inputWidth}" placeholder="..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>${after}</span>`;
+  return `<span class="quiz-inline-wrap">${before}<input id="typingIn" class="quiz-inline-input" style="width:${initWidth}" placeholder="..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+    oninput="this.style.width=Math.max(this.value.length*12+40,80)+'px'"/>${after}</span>`;
 }
 
 function renderQ() {
