@@ -287,7 +287,7 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .upload-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .upload-sub { font-size: 12px; color: var(--muted); }
 .upload-info { font-size: 13px; color: var(--accent); margin-bottom: 16px; min-height: 18px; font-weight: 600; }
-.upload-field { margin-bottom: 16px; }
+.upload-field { margin-bottom: 16px; overflow: hidden; }
 .voice-status-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .voice-btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .2s; }
 .voice-btn.idle { background: var(--surface2); color: var(--muted); }
@@ -333,8 +333,9 @@ nav { background: var(--bg); padding: 0 var(--side); display: flex; align-items:
 .char-field { margin-bottom: 16px; }
 .char-field:last-child { margin-bottom: 0; }
 .char-label { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
-.char-input { width: 100%; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--rs); font-size: 15px; font-family: "DM Sans", sans-serif; background: var(--surface); color: var(--ink); }
+.char-input { width: 100%; max-width: 100%; box-sizing: border-box; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--rs); font-size: 15px; font-family: "DM Sans", sans-serif; background: var(--surface); color: var(--ink); }
 .char-input:focus { outline: none; border-color: var(--accent); }
+input[type="date"].char-input { -webkit-appearance: none; appearance: none; }
 .char-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .char-chip { padding: 9px 18px; border: 1.5px solid var(--border); border-radius: var(--r); background: var(--surface); font-size: 13px; font-family: "DM Sans", sans-serif; cursor: pointer; color: var(--ink2); transition: all .12s; text-align: center; line-height: 1.4; font-weight: 500; }
 .char-chip small { font-size: 10px; color: var(--muted); display: block; }
@@ -2178,7 +2179,7 @@ function renderDashboard(allPhrases) {
   const todayD = String(today.getDate()).padStart(2, '0');
   const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-  // 이번 달 수업 날짜 세트
+  // 이번 달 수업 날짜 세트 (위클리 스트립용)
   const studiedDates = new Set();
   db.sessions.forEach(s => {
     const p = s.date.split('.');
@@ -2187,21 +2188,23 @@ function renderDashboard(allPhrases) {
     }
   });
 
-  const totalDays = studiedDates.size;
-  const elDays = document.getElementById('dashDays');
-  if (elDays) elDays.innerHTML = totalDays + '<span>일</span>';
-
-  const pct = Math.round(totalDays / daysInMonth * 100);
-  const elPct = document.getElementById('dashDaysPct');
-  if (elPct) elPct.textContent = pct + '%';
-
-  // 연속 학습 계산
-  let streak = 0, maxStreak = 0, cur = 0;
+  // 누적 학습일수 — 전체 기간 고유 날짜 수
   const allStudied = new Set();
   db.sessions.forEach(s => {
     const p = s.date.split('.');
     allStudied.add(`${p[0]}.${String(parseInt(p[1])).padStart(2,'0')}.${String(parseInt(p[2])).padStart(2,'0')}`);
   });
+
+  const totalDays = allStudied.size;
+  const elDays = document.getElementById('dashDays');
+  if (elDays) elDays.innerHTML = totalDays + '<span>일</span>';
+
+  const pct = Math.round(studiedDates.size / daysInMonth * 100);
+  const elPct = document.getElementById('dashDaysPct');
+  if (elPct) elPct.textContent = pct + '%';
+
+  // 연속 학습 계산
+  let streak = 0, maxStreak = 0, cur = 0;
   const d = new Date(today);
   while (true) {
     const key = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
