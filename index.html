@@ -2067,11 +2067,14 @@ function switchTab(tab) {
   if (tab === 'home') { showScreen('homeScreen'); renderHome(); }
   else if (tab === 'review') {
     showScreen('reviewScreen');
-    renderCalendar();
+    renderCalendar(); // ★ activeProfileFilter 이미 적용됨
     const allPhrases = db.sessions.flatMap(s => s.phrases);
-    renderTopicCounts(allPhrases);
-    renderWrongList(allPhrases);
-    renderRecentList(allPhrases);
+    const filtered = activeProfileFilter
+      ? allPhrases.filter(p => p.character_profile === activeProfileFilter)
+      : allPhrases;
+    renderTopicCounts(filtered);
+    renderWrongList(filtered);
+    renderRecentList(filtered);
     renderProfileFilter(allPhrases);
   }
   else if (tab === 'input') {
@@ -2512,6 +2515,7 @@ function setProfileFilter(val) {
   renderTopicCounts(filtered);
   renderWrongList(filtered);
   renderRecentList(filtered);
+  renderCalendar(); // ★ 캘린더도 필터 적용
 }
 
 function renderWrongList(allPhrases) {
@@ -2556,8 +2560,13 @@ function startRecentQuiz() {
 }
 
 function renderCalendar() {
+  // ★ activeProfileFilter 적용 — 해당 말투 세션만 표시
+  const visibleSessions = activeProfileFilter
+    ? db.sessions.filter(s => s.phrases.some(p => p.character_profile === activeProfileFilter))
+    : db.sessions;
+
   const yearMap = {};
-  db.sessions.forEach(s => {
+  visibleSessions.forEach(s => {
     const parts = s.date.split('.');
     const y = parts[0], m = String(parseInt(parts[1]));
     if (!yearMap[y]) yearMap[y] = {};
@@ -2586,7 +2595,20 @@ function renderCalendar() {
 
 function selectCalYear(y) { calYear = y; calMonth = null; calDay = null; renderCalendar(); }
 function selectCalMonth(m) { calMonth = m; calDay = null; renderCalendar(); }
-function selectCalDay(d) { calDay = calDay === d ? null : d; renderCalGrid({ [calYear]: { [calMonth]: (db.sessions.filter(s => { const p = s.date.split('.'); return p[0]===calYear && String(parseInt(p[1]))===calMonth; })) } }); renderSessionCards(); }
+function selectCalDay(d) {
+  calDay = calDay === d ? null : d;
+  const daySessions = db.sessions.filter(s => {
+    const p = s.date.split('.');
+    if (!(p[0]===calYear && String(parseInt(p[1]))===calMonth)) return false;
+    const dayMatch = d === String(parseInt(p[2])) || d === p[2];
+    if (!dayMatch) return false;
+    // ★ 말투 필터 적용
+    if (activeProfileFilter) return s.phrases.some(p2 => p2.character_profile === activeProfileFilter);
+    return true;
+  });
+  renderCalGrid({ [calYear]: { [calMonth]: daySessions } });
+  renderSessionCards();
+}
 
 function renderCalGrid(yearMap) {
   const wrap = document.getElementById('calGridWrap');
@@ -2623,7 +2645,6 @@ function renderCalGrid(yearMap) {
 
 function renderSessionCards() {
   const dc = document.getElementById('dateCards');
-  // 날짜 선택 안 됐으면 카드 숨김
   if (!calDay) { dc.innerHTML = ''; return; }
   if (!db.sessions.length) {
     dc.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px;">아직 수업 데이터가 없어요<br>학습 탭에서 수업을 추가해보세요</div>`;
@@ -2637,7 +2658,11 @@ function renderSessionCards() {
     const d = s.date.split('.')[2];
     return d === calDay || String(parseInt(d)) === String(parseInt(calDay));
   });
-  if (!sessions.length) { dc.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">이 날은 수업 기록이 없어요</div>`; return; }
+  // ★ 말투 필터 적용
+  if (activeProfileFilter) {
+    sessions = sessions.filter(s => s.phrases.some(p => p.character_profile === activeProfileFilter));
+  }
+  if (!sessions.length) { dc.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">이 날은 ${activeProfileFilter ? activeProfileFilter + ' ' : ''}수업 기록이 없어요</div>`; return; }
   dc.innerHTML = sessions.map(s => `
     <div class="date-card" onclick="openSession('${s.id}')">
       <div class="date-icon" style="font-size:11px;font-weight:700;">${s.date.split('.').slice(1).join('/')}<br><small style="font-size:10px;opacity:.7;">${s.dayOfWeek || ''}</small></div>
